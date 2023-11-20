@@ -50,7 +50,7 @@ export class basketBallScene extends Scene {
         //create the court ground
         //current model_transform is uniform and cube we are using is a unit cube
         //1 unit counts as 1 meter (Subject to change)
-        model_transform = model_transform.times(Mat4.translation(0,-3,0).times(Mat4.scale(3,3,3)));
+        model_transform = model_transform.times(Mat4.translation(0,-3,0).times(Mat4.scale(5,3,5)));
         let court_transform = model_transform.times(Mat4.scale(7.62,0.1,14.325));
         this.shapes.cube.draw(context,program_state,court_transform,this.materials.court_texture);
         //create the pole holding up the hoop
