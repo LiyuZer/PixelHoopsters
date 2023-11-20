@@ -17,7 +17,8 @@ export class basketBallScene extends Scene {
 
         this.shapes = {
             basketball: new defs.Subdivision_Sphere(5),
-            cube : new Cube()
+            cube : new Cube(),
+            torus : new defs.Torus(10,10),
         }
 
 
@@ -26,8 +27,19 @@ export class basketBallScene extends Scene {
                 color: hex_color("#ffffff"),
             }),
             texture: new Material(new Textured_Phong(), {
-                ambient: 0.5, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/b_texture.png")
+                ambient: 0.8, diffusivity: 0, specularity: 0.1,
+                texture: new Texture("assets/b_texture.png"),
+            }),
+            court_texture: new Material(new Textured_Phong(), {
+                ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/court.png")
+            }),
+            backboard_texture: new Material(new Textured_Phong(), {
+                ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/Backboard.png")
+            }),
+            rim_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#C0C0C0"),
             }),
         }
 
@@ -38,14 +50,18 @@ export class basketBallScene extends Scene {
         //create the court ground
         //current model_transform is uniform and cube we are using is a unit cube
         //1 unit counts as 1 meter (Subject to change)
-        model_transform = model_transform.times(Mat4.translation(0,-3,0));
+        model_transform = model_transform.times(Mat4.translation(0,-3,0).times(Mat4.scale(3,3,3)));
         let court_transform = model_transform.times(Mat4.scale(7.62,0.1,14.325));
-        this.shapes.cube.draw(context,program_state,court_transform,this.materials.phong);
+        this.shapes.cube.draw(context,program_state,court_transform,this.materials.court_texture);
         //create the pole holding up the hoop
         let pole_transform = model_transform.times(Mat4.translation(0,0,-13.1058))
             .times(Mat4.scale(0.40,3.5,0.4))
             .times(Mat4.translation(0,1,0));
         this.shapes.cube.draw(context,program_state,pole_transform,this.materials.phong)
+        let back_board_transform = model_transform.times(Mat4.translation(0,7,-12.6).times(Mat4.scale(2,2,0.1)))
+        this.shapes.cube.draw(context,program_state,back_board_transform,this.materials.backboard_texture)
+        let rim_transform = model_transform.times(Mat4.translation(0,5.6,-11.7).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))))
+        this.shapes.torus.draw(context,program_state,rim_transform,this.materials.rim_texture)
     }
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
