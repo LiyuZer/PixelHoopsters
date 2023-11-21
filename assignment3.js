@@ -21,7 +21,7 @@ export class basketBallScene extends Scene {
             torus : new defs.Torus(10,10),
         }
 
-
+        this.hoop_location = Mat4.identity().times(Mat4.translation(0,5.6,-11.7).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
         this.materials = {
             phong: new Material(new Textured_Phong(), {
                 color: hex_color("#ffffff"),
@@ -45,7 +45,23 @@ export class basketBallScene extends Scene {
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
     }
-
+    //this function returns basketball's motion along its projectile path
+    //TODO: make this function more general such as when it is not directly facing the net and wind
+    basketball_thrown(ball_transform,initial_velocity,angle,time_thrown){
+      //time_thrown represents the exact instant in time when our player decides to shoot ball
+      //for now time_thrown will be at time 3
+      let ballTime = this.t - time_thrown;
+      //for now our initial_velocity will be 25 m/s
+      
+      //assume our mass of ball is 0.624 kg
+      const gravity = 9.81 //force of gravity on ball
+      //x direction not affected by gravity
+      const horizontalPosition = initial_velocity*Math.cos(angle) * ballTime;
+      const verticalPosition = initial_velocity*Math.sin(angle)*ballTime - (0.5*gravity*(ballTime**2));
+      //with how we are currently set up, we are facing the net in the -z direction.
+      ball_transform = ball_transform.times(Mat4.translation(0,verticalPosition,-1*horizontalPosition));
+      return ball_transform;
+    }
     create_court(context,program_state,model_transform){
         //create the court ground
         //current model_transform is uniform and cube we are using is a unit cube
@@ -80,14 +96,20 @@ export class basketBallScene extends Scene {
         const light_position = vec4(10, 10, 10, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
 
-        let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        this.t = program_state.animation_time / 1000;
+        let dt = program_state.animation_delta_time / 1000;
         let model_transform = Mat4.identity();
-
-        // TODO:  Draw the required boxes. Also update their stored matrices.
-        // You can remove the folloeing line.
-        this.shapes.basketball.draw(context, program_state, model_transform, this.materials.texture);
+        
+        //for now we assume ball was thrown at 45 degrees from the vertical
+        let angle = 0.78539; //radians
+        //also for now assume intial velocity is 25m/s and time thrown is at 0
+        let ball_transform = model_transform;
+        if(this.t > 3.0){ //ball thrown at 3 seconds
+          ball_transform = this.basketball_thrown(model_transform,25,angle,3);
+        }
+        this.shapes.basketball.draw(context, program_state, ball_transform, this.materials.texture);
         this.create_court(context,program_state,model_transform);
-
+        
     }
 }
 
