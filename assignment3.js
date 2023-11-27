@@ -19,12 +19,15 @@ export class basketBallScene extends Scene {
             basketball: new defs.Subdivision_Sphere(5),
             cube : new Cube(),
             torus : new defs.Torus(10,10),
+            //stands: new defs.Subdivision_Sphere(5), // adjust parameters as needed
+            //roof: new defs.Cube(),
+            //scorer: new defs.Cube(),
         }
 
         this.hoop_location = Mat4.identity().times(Mat4.translation(0,5.6,-11.7).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
         this.materials = {
             phong: new Material(new Textured_Phong(), {
-                color: hex_color("#ffffff"),
+                color: hex_color("#CD5C5C"),
             }),
             texture: new Material(new Textured_Phong(), {
                 ambient: 0.8, diffusivity: 0, specularity: 0.1,
@@ -39,11 +42,17 @@ export class basketBallScene extends Scene {
                 texture: new Texture("assets/Backboard.png")
             }),
             rim_texture: new Material(new Textured_Phong(), {
-                color: hex_color("#C0C0C0"),
+                color: hex_color("#FF5F15"),
             }),
+            wall_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#C0C0C0"),
+                ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/wall.png")
+            }),
+
         }
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 20, 20), vec3(0, 0, 0), vec3(0, 10, 0));
     }
     //this function returns basketball's motion along its projectile path
     //TODO: make this function more general such as when it is not directly facing the net and wind
@@ -62,26 +71,77 @@ export class basketBallScene extends Scene {
       ball_transform = ball_transform.times(Mat4.translation(0,verticalPosition,-1*horizontalPosition));
       return ball_transform;
     }
+
+    create_stadium(context, program_state, model_transform) {
+        // existing court creation code...
+    
+    }
+
+
     create_court(context,program_state,model_transform){
         //create the court ground
         //current model_transform is uniform and cube we are using is a unit cube
         //1 unit counts as 1 meter (Subject to change)
-        model_transform = model_transform.times(Mat4.translation(0,-3,0).times(Mat4.scale(5,3,5)));
-        let court_transform = model_transform.times(Mat4.scale(7.62,0.1,14.325));
+        model_transform = model_transform.times(Mat4.translation(0,-1.5,0));
+        let court_transform = model_transform.times(Mat4.scale(17,0.1,30));
+
+
         this.shapes.cube.draw(context,program_state,court_transform,this.materials.court_texture);
+
         //create the pole holding up the hoop
-        let pole_transform = model_transform.times(Mat4.translation(0,0,-13.1058))
-            .times(Mat4.scale(0.40,3.5,0.4))
-            .times(Mat4.translation(0,1,0));
-        this.shapes.cube.draw(context,program_state,pole_transform,this.materials.phong)
-        let back_board_transform = model_transform.times(Mat4.translation(0,7,-12.6).times(Mat4.scale(2,2,0.1)))
-        this.shapes.cube.draw(context,program_state,back_board_transform,this.materials.backboard_texture)
-        let rim_transform = model_transform.times(Mat4.translation(0,5.6,-11.7).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))))
-        this.shapes.torus.draw(context,program_state,rim_transform,this.materials.rim_texture)
+        let pole_transform = model_transform.times(Mat4.translation(0,3,-29))
+            .times(Mat4.scale(0.40,3,0.4));
+        this.shapes.cube.draw(context,program_state,pole_transform,this.materials.phong);
+
+        let support_transform = model_transform.times(Mat4.translation(0,5.6,-28)).times(Mat4.scale(0.4,0.4,1));
+        this.shapes.cube.draw(context,program_state,support_transform,this.materials.phong);
+
+        let back_board_transform = model_transform.times(Mat4.translation(0,6,-27).times(Mat4.scale(1.8,1.2,0.1)));
+        this.shapes.cube.draw(context,program_state,back_board_transform,this.materials.backboard_texture);
+        let rim_transform = model_transform.times(Mat4.translation(0,5.15,-26).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
+        this.shapes.torus.draw(context,program_state,rim_transform,this.materials.rim_texture);
+
+
+        //create the pole holding up the hoop
+        let pole_transform_1 = model_transform.times(Mat4.translation(0,3,29))
+        .times(Mat4.scale(0.40,3,0.4));
+        this.shapes.cube.draw(context,program_state,pole_transform_1,this.materials.phong);
+
+        let support_transform_1 = model_transform.times(Mat4.translation(0,5.6,28)).times(Mat4.scale(0.4,0.4,1));
+        this.shapes.cube.draw(context,program_state,support_transform_1,this.materials.phong);
+
+        let back_board_transform_1 = model_transform.times(Mat4.translation(0,6,27).times(Mat4.scale(1.8,1.2,0.1)));
+        this.shapes.cube.draw(context,program_state,back_board_transform_1,this.materials.backboard_texture);
+        let rim_transform_1 = model_transform.times(Mat4.translation(0,5.15,26).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
+        this.shapes.torus.draw(context,program_state,rim_transform_1,this.materials.rim_texture);
+
+
+        // left side
+        let left_transform = model_transform.times(Mat4.translation(-17,8,0)).times(Mat4.scale(0.1,8,30));
+        this.shapes.cube.draw(context, program_state, left_transform, this.materials.wall_texture);
+
+        // right side
+        let right_transform = model_transform.times(Mat4.translation(17,8,0)).times(Mat4.scale(0.1,8,30));
+        this.shapes.cube.draw(context, program_state, right_transform, this.materials.wall_texture);
+
+
+        // front side1
+        let front_transform = model_transform.times(Mat4.translation(0,8,-30)).times(Mat4.scale(17,8,0.1));
+        this.shapes.cube.draw(context, program_state, front_transform, this.materials.wall_texture);
+        
+
+        // back side1
+        let back_transform = model_transform.times(Mat4.translation(0,8,30)).times(Mat4.scale(17,8,0.1));
+        this.shapes.cube.draw(context, program_state, back_transform, this.materials.wall_texture);
+                
+
+
+
     }
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
     }
+
 
     display(context, program_state) {
         if (!context.scratchpad.controls) {
@@ -109,6 +169,7 @@ export class basketBallScene extends Scene {
         }
         this.shapes.basketball.draw(context, program_state, ball_transform, this.materials.texture);
         this.create_court(context,program_state,model_transform);
+        //this.create_stadium(context, program_state, model_transform);
         
     }
 }
