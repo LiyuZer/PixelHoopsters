@@ -1,0 +1,18 @@
+Gameplay Features:
+Using mouse to control ball shooting(angle to shoot, power, etc)
+Randomize ball location
+Different camera angles to help player shoot
+Need to generalize the current projectile motion for basketball (players will shoot at different angles and powers and will need to account for wind)
+Effects of wind on ball
+Tools for player to control the environment(ie wind speed or environment)
+When ball get shot, the camera follows the ball when it gets shot
+Collisions
+Score keeping <- how do we know when the player has scored a shot?
+
+Modeling, animation, and lighting:
+Need an outside and inside environment (maybe like trees for outside background and an audience for inside?)
+Spinning the basketball while it spins
+Lighting (outside will have the sun, idk what to do about inside)
+Different lighting for different times of day we set our current environment on - night, day, or sunset/sunrise
+Two options, we could either have preset times for each time cycle or have each time cycle naturally into one another <- ie the lighting naturally transitions into each other
+Shadows <- keep in mind the ball’s shadow needs to be updated in real time
