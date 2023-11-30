@@ -23,7 +23,7 @@ export class basketBallScene extends Scene {
             //roof: new defs.Cube(),
             //scorer: new defs.Cube(),
         }
-
+        this.newRound = true; //tells whether this is new shot for player
         this.hoop_location = Mat4.identity().times(Mat4.translation(0,5.6,-11.7).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
         this.materials = {
             phong: new Material(new Textured_Phong(), {
@@ -52,7 +52,7 @@ export class basketBallScene extends Scene {
 
         }
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 20, 20), vec3(0, 0, 0), vec3(0, 10, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 0, 0), vec3(0,5.6,-11.7), vec3(0, 10, 0));
     }
     //this function returns basketball's motion along its projectile path
     //TODO: make this function more general such as when it is not directly facing the net and wind
@@ -76,7 +76,22 @@ export class basketBallScene extends Scene {
         // existing court creation code...
     
     }
-
+    round_setup(model_transform,program_state){
+      let randomX = 0.0;
+      let randomZ = 0.0;
+      if(Math.random() < 0.5){ //50% of the time we move away
+        randomX = -1.0 * Math.floor(Math.random() * 14.0);
+        randomZ = -1.0 * Math.floor(Math.random() * 20.0);
+      }
+      else{
+        randomX = Math.floor(Math.random() * 14.0);
+        randomZ = Math.floor(Math.random() * 20.0);
+      }
+      this.ball_transform = model_transform.times(Mat4.translation(randomX,0,randomZ));
+      this.newRound = false;
+      //set our camera to ball's new location (work in progress as camera does not align perfectly yet)
+      program_state.set_camera(Mat4.look_at(vec3(randomX, 3, randomZ +9), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
+    }
 
     create_court(context,program_state,model_transform){
         //create the court ground
@@ -141,7 +156,8 @@ export class basketBallScene extends Scene {
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
     }
-
+    //this function is what gets done after a shot is made (i.e placing the basketball in random location)
+    
 
     display(context, program_state) {
         if (!context.scratchpad.controls) {
@@ -159,18 +175,22 @@ export class basketBallScene extends Scene {
         this.t = program_state.animation_time / 1000;
         let dt = program_state.animation_delta_time / 1000;
         let model_transform = Mat4.identity();
+        //randomize our basketball position
         
         //for now we assume ball was thrown at 45 degrees from the vertical
         let angle = 0.78539; //radians
         //also for now assume intial velocity is 25m/s and time thrown is at 0
-        let ball_transform = model_transform;
-        if(this.t > 3.0){ //ball thrown at 3 seconds
-          ball_transform = this.basketball_thrown(model_transform,25,angle,3);
+        //temporarily disabled ball shooting (does not work with random ball position)
+        //if(this.t > 3.0){ //ball thrown at 3 seconds
+          //this.ball_transform = this.basketball_thrown(ball_transform,25,angle,3);
+        //}
+        if (this.newRound){
+          this.round_setup(model_transform,program_state);
+          
         }
-        this.shapes.basketball.draw(context, program_state, ball_transform, this.materials.texture);
         this.create_court(context,program_state,model_transform);
         //this.create_stadium(context, program_state, model_transform);
-        
+        this.shapes.basketball.draw(context, program_state, this.ball_transform, this.materials.texture);
     }
 }
 
