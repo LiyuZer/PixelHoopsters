@@ -14,7 +14,8 @@ export class basketBallScene extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-
+        this.ball_transform = Mat4.identity();
+        this.vertVelocity = 10.61; //temp variable for projectile motion will delete in actual implementation
         this.shapes = {
             basketball: new defs.Subdivision_Sphere(5),
             cube : new Cube(),
@@ -56,20 +57,17 @@ export class basketBallScene extends Scene {
     }
     //this function returns basketball's motion along its projectile path
     //TODO: make this function more general such as when it is not directly facing the net and wind
-    basketball_thrown(ball_transform,initial_velocity,angle,time_thrown){
-      //time_thrown represents the exact instant in time when our player decides to shoot ball
-      //for now time_thrown will be at time 3
-      let ballTime = this.t - time_thrown;
-      //for now our initial_velocity will be 25 m/s
-      
+    basketball_thrown(initial_velocity,verticalAngle,horizontalAngle,vertical_velcity){
       //assume our mass of ball is 0.624 kg
-      const gravity = 9.81 //force of gravity on ball
+      const gravity = 9.81; //force of gravity on ball
+      
+      const current_vertical_velocity = vertical_velcity - gravity*this.dt;//our vertical velocity is constantly changing
       //x direction not affected by gravity
-      const horizontalPosition = initial_velocity*Math.cos(angle) * ballTime;
-      const verticalPosition = initial_velocity*Math.sin(angle)*ballTime - (0.5*gravity*(ballTime**2));
+      const horizontalPosition = initial_velocity*Math.cos(verticalAngle) * this.dt;
+      const verticalPosition = current_vertical_velocity * this.dt;
       //with how we are currently set up, we are facing the net in the -z direction.
-      ball_transform = ball_transform.times(Mat4.translation(0,verticalPosition,-1*horizontalPosition));
-      return ball_transform;
+      this.ball_transform = this.ball_transform.times(Mat4.translation(horizontalPosition*Math.sin(horizontalAngle),verticalPosition,-1*horizontalPosition*Math.cos(horizontalAngle)));
+      return current_vertical_velocity;
     }
 
     create_stadium(context, program_state, model_transform) {
@@ -173,24 +171,24 @@ export class basketBallScene extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
 
         this.t = program_state.animation_time / 1000;
-        let dt = program_state.animation_delta_time / 1000;
+        this.dt = program_state.animation_delta_time / 1000;
         let model_transform = Mat4.identity();
-        //randomize our basketball position
-        
+        //randomize our basketball position (currently commented out to test basketball shooting)
+        //if (this.newRound){
+          //this.round_setup(model_transform,program_state);
+          
+        //}
         //for now we assume ball was thrown at 45 degrees from the vertical
         let angle = 0.78539; //radians
-        //also for now assume intial velocity is 25m/s and time thrown is at 0
-        //temporarily disabled ball shooting (does not work with random ball position)
-        //if(this.t > 3.0){ //ball thrown at 3 seconds
-          //this.ball_transform = this.basketball_thrown(ball_transform,25,angle,3);
-        //}
-        if (this.newRound){
-          this.round_setup(model_transform,program_state);
-          
+        
+        
+        if(this.t > 3.0){
+          //basketball shot at 10 degrees to the right
+          this.vertVelocity = this.basketball_thrown(15.0,angle,0.174,this.vertVelocity); //projectile motion function requires us to store current vert velocity
         }
         this.create_court(context,program_state,model_transform);
         //this.create_stadium(context, program_state, model_transform);
-        this.shapes.basketball.draw(context, program_state, this.ball_transform, this.materials.texture);
+        this.shapes.basketball.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), this.materials.texture);
     }
 }
 
