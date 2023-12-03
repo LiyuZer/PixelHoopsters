@@ -19,10 +19,14 @@ export class basketBallScene extends Scene {
             basketball: new defs.Subdivision_Sphere(5),
             cube : new Cube(),
             torus : new defs.Torus(10,10),
+            sphere_enclosing: new defs.Subdivision_Sphere(4),
             //stands: new defs.Subdivision_Sphere(5), // adjust parameters as needed
             //roof: new defs.Cube(),
             //scorer: new defs.Cube(),
         }
+
+        //We have five different environments outdoor, indoor, lake
+        this.environments = ['lake'];
 
         this.hoop_location = Mat4.identity().times(Mat4.translation(0,5.6,-11.7).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
         this.materials = {
@@ -49,6 +53,22 @@ export class basketBallScene extends Scene {
                 ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/wall.png")
             }),
+            indoor_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/indoor.png")
+            }),
+            outdoor_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/outdoor.png")
+            }),
+            lake_texture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/lake.png")
+            }),
+
 
         }
 
@@ -116,24 +136,36 @@ export class basketBallScene extends Scene {
         this.shapes.torus.draw(context,program_state,rim_transform_1,this.materials.rim_texture);
 
 
-        // left side
-        let left_transform = model_transform.times(Mat4.translation(-17,8,0)).times(Mat4.scale(0.1,8,30));
-        this.shapes.cube.draw(context, program_state, left_transform, this.materials.wall_texture);
+        // // left side
+        // let left_transform = model_transform.times(Mat4.translation(-17,8,0)).times(Mat4.scale(0.1,8,30));
+        // this.shapes.cube.draw(context, program_state, left_transform, this.materials.wall_texture);
+        //
+        // // right side
+        // let right_transform = model_transform.times(Mat4.translation(17,8,0)).times(Mat4.scale(0.1,8,30));
+        // this.shapes.cube.draw(context, program_state, right_transform, this.materials.wall_texture);
+        //
+        //
+        // // front side1
+        // let front_transform = model_transform.times(Mat4.translation(0,8,-30)).times(Mat4.scale(17,8,0.1));
+        // this.shapes.cube.draw(context, program_state, front_transform, this.materials.wall_texture);
+        //
+        //
+        // // back side1
+        // let back_transform = model_transform.times(Mat4.translation(0,8,30)).times(Mat4.scale(17,8,0.1));
+        // this.shapes.cube.draw(context, program_state, back_transform, this.materials.wall_texture);
+        if (this.environments == 'indoor'){
+            let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.rotation(1.4,0,1,0)).times(Mat4.scale(60,60,60));
+            this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.indoor_texture);
+        }
+        else if(this.environments == 'outdoor'){
+            let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.scale(60,60,60));
+            this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.outdoor_texture);
+        }
+        else{
+            let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.scale(60,60,60));
+            this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.lake_texture);
+        }
 
-        // right side
-        let right_transform = model_transform.times(Mat4.translation(17,8,0)).times(Mat4.scale(0.1,8,30));
-        this.shapes.cube.draw(context, program_state, right_transform, this.materials.wall_texture);
-
-
-        // front side1
-        let front_transform = model_transform.times(Mat4.translation(0,8,-30)).times(Mat4.scale(17,8,0.1));
-        this.shapes.cube.draw(context, program_state, front_transform, this.materials.wall_texture);
-        
-
-        // back side1
-        let back_transform = model_transform.times(Mat4.translation(0,8,30)).times(Mat4.scale(17,8,0.1));
-        this.shapes.cube.draw(context, program_state, back_transform, this.materials.wall_texture);
-                
 
 
 
