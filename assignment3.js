@@ -25,14 +25,7 @@ export class basketBallScene extends Scene {
             //roof: new defs.Cube(),
             //scorer: new defs.Cube(),
         }
-<<<<<<< HEAD
-
-        //We have five different environments outdoor, indoor, lake
-        this.environments = ['lake'];
-
-=======
         this.newRound = true; //tells whether this is new shot for player
->>>>>>> 470442a2f1a86fb58b88bcd18e3072dce4ac60ba
         this.hoop_location = Mat4.identity().times(Mat4.translation(0,5.6,-11.7).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
         this.materials = {
             phong: new Material(new Textured_Phong(), {
@@ -78,6 +71,10 @@ export class basketBallScene extends Scene {
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 0), vec3(0,5.6,-11.7), vec3(0, 10, 0));
+        this.environments = 0;
+
+
+
     }
     //mouse controls
     my_mouse_down(e, pos, context, program_state) {
@@ -106,6 +103,7 @@ export class basketBallScene extends Scene {
 
       //this.animation_queue.push(animation_bullet)
   }
+
     //this function returns basketball's motion along its projectile path
     //TODO: make this function more general such as when it is not directly facing the net and wind
     basketball_thrown(initial_velocity,verticalAngle,horizontalAngle,vertical_velcity){
@@ -206,11 +204,11 @@ export class basketBallScene extends Scene {
         // // back side1
         // let back_transform = model_transform.times(Mat4.translation(0,8,30)).times(Mat4.scale(17,8,0.1));
         // this.shapes.cube.draw(context, program_state, back_transform, this.materials.wall_texture);
-        if (this.environments == 'indoor'){
+        if (this.environments == 0){
             let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.rotation(1.4,0,1,0)).times(Mat4.scale(60,60,60));
             this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.indoor_texture);
         }
-        else if(this.environments == 'outdoor'){
+        else if(this.environments == 1){
             let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.scale(60,60,60));
             this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.outdoor_texture);
         }
@@ -225,6 +223,7 @@ export class basketBallScene extends Scene {
     }
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
+        this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
     }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
     
