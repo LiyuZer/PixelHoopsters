@@ -474,7 +474,7 @@ export class basketBallScene extends Scene {
             //console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
             //console.log("mouse_position(e): " + mouse_position(e));
             this.initialMPosition = vec(e.clientX, e.clientY);
-            console.log(angle);
+
           });
           canvas.addEventListener("mouseup",(e)=>{
             //this will get our new coords basically allowing us to calculate the new angle
