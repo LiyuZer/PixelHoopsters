@@ -377,10 +377,6 @@ export class basketBallScene extends Scene {
             let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.scale(60,60,60));
             this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.lake_texture);
         }
-
-
-        this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), this.materials.texture_shadow);
-    
     }
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
@@ -524,6 +520,8 @@ export class basketBallScene extends Scene {
             this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
         }
         this.create_court(context,program_state,model_transform);
+        this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), this.materials.texture_shadow);
+
         //this.create_stadium(context, program_state, model_transform);
         }
 }
