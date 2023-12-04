@@ -122,9 +122,16 @@ export class basketBallScene extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 0), vec3(0,5.6,-11.7), vec3(0, 10, 0));
         this.environments = 0;
         this.init_ok = false;
+        this.direction_vector = vec3(0,0,0);
+        this.ball_thrown = false;
+        this.current_direction  = vec3(0,0,0); // The direction we are looking at
+    }
 
-
-
+    // The way we will calculate collision, is by seperating each individual objects and then checking if the ball
+    // collides with that object, if it does then we have a collision, and by taking the normal of the surface and teh
+    // angle of incidence(We expect the collision to be fully elastic) we will relfect the balls in another direction/
+    static intersect_ground(p, margin = 0) {
+        return p[1] < -1.0;
     }
 
 
@@ -226,17 +233,34 @@ export class basketBallScene extends Scene {
 
     //this function returns basketball's motion along its projectile path
     //TODO: make this function more general such as when it is not directly facing the net and wind
-    basketball_thrown(initial_velocity,verticalAngle,horizontalAngle,vertical_velcity){
+    basketball_thrown(){
       //assume our mass of ball is 0.624 kg
       const gravity = 9.81; //force of gravity on ball
-      
-      const current_vertical_velocity = vertical_velcity - gravity*this.dt;//our vertical velocity is constantly changing
-      //x direction not affected by gravity
-      const horizontalPosition = initial_velocity*Math.cos(verticalAngle) * this.dt;
-      const verticalPosition = current_vertical_velocity * this.dt;
-      //with how we are currently set up, we are facing the net in the -z direction.
-      this.ball_transform = this.ball_transform.times(Mat4.translation(horizontalPosition*Math.sin(horizontalAngle),verticalPosition,-1*horizontalPosition*Math.cos(horizontalAngle)));
-      return current_vertical_velocity;
+      var point = this.ball_transform.times(vec4(0,0,0,1));
+      var directional_vector = this.direction_vector;
+        // Constants for air resistance
+        const rho = 0.005; // Air density (kg/m^3) at sea level
+        const Cd = 0.2; // Drag coefficient for a sphere
+        const A = 2.4567; // Cross-sectional area of the ball
+
+        if(basketBallScene.intersect_ground(point)){
+          var negated_vec = directional_vector.times(-1);
+          directional_vector =  (vec3(0,1,0).times(2 * (vec3(0,1,0).dot(negated_vec)))).minus(negated_vec);
+          const position_vector = vec3(directional_vector[0] * this.dt, directional_vector[1] * this.dt - (9.81/2) * this.dt * this.dt , directional_vector[2] * this.dt );
+            const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
+            const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
+            const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1]- (9.81) * this.dt, directional_vector[2]).plus(dragForceVector);
+          this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1],position_vector[2]));
+      }
+      else{
+          const position_vector = vec3(directional_vector[0] * this.dt, directional_vector[1] * this.dt - (9.81/2) * this.dt * this.dt , directional_vector[2] * this.dt );
+            const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
+            const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
+            const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1]- (9.81) * this.dt, directional_vector[2]).plus(dragForceVector);
+          this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1],position_vector[2]));
+      }
     }
     create_stadium(context, program_state, model_transform) {
         // existing court creation code...
@@ -261,10 +285,12 @@ export class basketBallScene extends Scene {
       //set our camera to ball's new location (work in progress as camera does not align perfectly yet)
       const angle = Math.atan(Math.abs((-11.7 - randomZ)/randomX)); //angle that the ball is facing the hoop
       if(randomX < 0.0){
-        program_state.set_camera(Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
+          this.current_direction = vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle));
+        program_state.set_camera(Mat4.look_at(this.current_direction, vec3(0,2.6,-11.7), vec3(0, 1, 0)));
       }
       else{
-        program_state.set_camera(Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
+          this.current_direction = vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle));
+        program_state.set_camera(Mat4.look_at(this.current_direction, vec3(0,2.6,-11.7), vec3(0, 1, 0)));
       }
       //program_state.set_camera(Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
     }
@@ -486,19 +512,18 @@ export class basketBallScene extends Scene {
           this.round_setup(model_transform,program_state);
           
         }
-        //for now we assume ball was thrown at 45 degrees from the vertical
-        let angle = 0.78539; //radians
-        
-        
-        if(this.t > 3.0){
-          //basketball shot at 10 degrees to the right
-          this.vertVelocity = this.basketball_thrown(15.0,angle,0.174,this.vertVelocity); //projectile motion function requires us to store current vert velocity
+        this.create_court(context,program_state,model_transform);
+
+        // The calculation for the thrown ball has changed slightly we now look at the directional vector rather than the angles
+        if(this.t > 3.0 && !this.ball_thrown ) {
+            this.ball_thrown = true;// ball is thrown over here
+            this.direction_vector = vec3(0,10,-10); // this is the initial directional vector
         }
-
-
-
-
-        this.create_court(context,program_state,model_transform, true,true, true);
+        //basketball shot at 10 degrees to the right
+        if(this.ball_thrown) {
+            this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
+        }
+        this.create_court(context,program_state,model_transform);
         //this.create_stadium(context, program_state, model_transform);
         }
 }
