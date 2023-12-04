@@ -462,35 +462,36 @@ export class basketBallScene extends Scene {
               vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
                   (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
             }
-            canvas.addEventListener("mousedown", e => { //mouse down event (unused for now, basically only gives us mouse coords of initial mouse press down)
-              e.preventDefault();
-              //basically, this will get the initial mouse coordinates so we know where the user is aiming
-              const rect = canvas.getBoundingClientRect();
-              console.log("mouse down")
-              console.log("e.clientX: " + e.clientX);
-              //console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
-              console.log("e.clientY: " + e.clientY);
-              //console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
-              //console.log("mouse_position(e): " + mouse_position(e));
-              this.initialMPosition = vec(e.clientX, e.clientY);
+            canvas.addEventListener("mousedown", e => {
+            e.preventDefault();
+            //basically, this will get the initial mouse coordinates
+            //kinda unused for now except for getting initial mouse info
+            const rect = canvas.getBoundingClientRect();
+            console.log("mouse down");
+            console.log("e.clientX: " + e.clientX);
+            //console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
+            console.log("e.clientY: " + e.clientY);
+            //console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
+            //console.log("mouse_position(e): " + mouse_position(e));
+            this.initialMPosition = vec(e.clientX, e.clientY);
+            console.log(angle);
           });
           canvas.addEventListener("mouseup",(e)=>{
             //this will get our new coords basically allowing us to calculate the new angle
             //our change in angle based on our new coords
             console.log("mouse up")
-            console.log("e.clientx: " + e.clientX); //some basic console logs telling us mouse coords for where mouse is released at
-            console.log("e.clienty: "+ e.clientY);
+            console.log("e.clientX: "+e.clientX);
+            console.log("e.clienY: "+e.clientY);
             const changeInX = Math.abs(e.clientX-545.0); //545 is basically the middle of screen(where ball is)
             console.log("changeInX: "+changeInX);
             const changeInY = Math.abs(600.0 - e.clientY); //600 is basically bottom of our screen(where ball is)
-            console.log("changeInY: "+changeInY)
-            let changeAngle = Math.atan(changeInX/changeInY); //how much our angle changed from where our ball is facing
-            
-            //our ball is initially facing where the camera is pointing at(this is pre-merge information)
-            if(e.clientX - 545.0 < 0){ //if left side of screen
+            console.log("changeInY: "+changeInY);
+            let changeAngle = Math.atan(changeInX/changeInY); //we will only use our change in X to calculate angle 
+            if(e.clientX - 545.0 < 0){
               changeAngle = -1.0 * changeAngle;
-            }
-            console.log("angle changed by(radians): "+ changeAngle); 
+            }//how much our angle was changed by our user clicking on screen
+            //initially basketball is facing where camera is pointing (this is pre-merge info)
+            console.log("changeAngle: "+changeAngle);
             const distance = Math.sqrt((changeInX**2)+(changeInY**2));
             this.power = 100.0 * (distance/290.0); //calculate power based on distance mouse is away from ball
             if(this.power > 100.0){
