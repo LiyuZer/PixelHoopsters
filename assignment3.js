@@ -125,6 +125,8 @@ export class basketBallScene extends Scene {
         this.direction_vector = vec3(0,0,0);
         this.ball_thrown = false;
         this.current_direction  = vec3(0,0,0); // The direction we are looking at
+        this.angle = 0.0;
+        this.power = 0.0;
     }
 
     // The way we will calculate collision, is by seperating each individual objects and then checking if the ball
@@ -388,7 +390,8 @@ export class basketBallScene extends Scene {
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
         this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
-    }
+        this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true});
+      }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
     render_scene(context, program_state, shadow_pass, draw_light_source=false, draw_shadow=false) {
         // shadow_pass: true if this is the second pass that draw the shadow.
@@ -452,54 +455,55 @@ export class basketBallScene extends Scene {
 
         if (!context.scratchpad.controls) { //only once per instance of our game
           context.scratchpad.controls = 1;
-          //this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); uncomment this if you want camera
-          context.scratchpad.controls = 1;
+          //this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
+          //context.scratchpad.controls = 1;
           // Define the global camera and projection matrices, which are stored in program_state.
           let LookAt = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
           program_state.set_camera(LookAt);  
           let canvas = context.canvas;
-          const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>{
-              vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
-                  (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
-            }
+            const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
+                vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
+                    (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
             canvas.addEventListener("mousedown", e => {
-            e.preventDefault();
-            //basically, this will get the initial mouse coordinates
-            //kinda unused for now except for getting initial mouse info
-            const rect = canvas.getBoundingClientRect();
-            console.log("mouse down");
-            console.log("e.clientX: " + e.clientX);
-            //console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
-            console.log("e.clientY: " + e.clientY);
-            //console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
-            //console.log("mouse_position(e): " + mouse_position(e));
-            this.initialMPosition = vec(e.clientX, e.clientY);
+              e.preventDefault();
+              //basically, this will get the initial mouse coordinates
+              //kinda unused for now except for getting initial mouse info
+              const rect = canvas.getBoundingClientRect();
+              console.log("mouse down");
+              console.log("e.clientX: " + e.clientX);
+              //console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
+              console.log("e.clientY: " + e.clientY);
+              //console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
+              //console.log("mouse_position(e): " + mouse_position(e));
+              this.initialMPosition = vec(e.clientX, e.clientY);
 
           });
           canvas.addEventListener("mouseup",(e)=>{
             //this will get our new coords basically allowing us to calculate the new angle
             //our change in angle based on our new coords
+            const rect = canvas.getBoundingClientRect();
             console.log("mouse up")
             console.log("e.clientX: "+e.clientX);
             console.log("e.clienY: "+e.clientY);
-            const changeInX = Math.abs(e.clientX-545.0); //545 is basically the middle of screen(where ball is)
+            const screenPort = mouse_position(e);
+            console.log(screenPort);
+            const changeInX = Math.abs(screenPort[0]); //545 is basically the middle of screen(where ball is)
             console.log("changeInX: "+changeInX);
-            const changeInY = Math.abs(600.0 - e.clientY); //600 is basically bottom of our screen(where ball is)
+            const changeInY = Math.abs(screenPort[1] - -1.0); //600 is basically bottom of our screen(where ball is)
             console.log("changeInY: "+changeInY);
             let changeAngle = Math.atan(changeInX/changeInY); //we will only use our change in X to calculate angle 
-            if(e.clientX - 545.0 < 0){
+            if(screenPort[0] < 0){
               changeAngle = -1.0 * changeAngle;
             }//how much our angle was changed by our user clicking on screen
             //initially basketball is facing where camera is pointing (this is pre-merge info)
             console.log("changeAngle: "+changeAngle);
             const distance = Math.sqrt((changeInX**2)+(changeInY**2));
-            this.power = 100.0 * (distance/290.0); //calculate power based on distance mouse is away from ball
-            if(this.power > 100.0){
-              this.power = 100.0;
+            this.power = distance * 3.0; //calculate power based on distance mouse is away from ball
+            if(this.power > 1.0){
+              this.power = 1.0;
             }
-            this.power = this.power/100.0; //convert into percent            
+            console.log("POWER:" + this.power)            
             this.angle += changeAngle; //this variable stores the angle gotten from clicking the screen
-            this.fired = true; //variable letting us know if the user has fired
           })
           // Define the global camera and projection matrices, which are stored in program_state.
           program_state.set_camera(Mat4.look_at(
@@ -567,13 +571,25 @@ export class basketBallScene extends Scene {
         this.create_court(context,program_state,model_transform);
 
         // The calculation for the thrown ball has changed slightly we now look at the directional vector rather than the angles
-        if(this.t > 3.0 && !this.ball_thrown ) {
-            this.ball_thrown = true;// ball is thrown over here
-            this.direction_vector = vec3(0,10,-10); // this is the initial directional vector
+        if(!this.ball_thrown) { //only calculates angle when ball is not shot
+          console.log(this.angle)
+          const direction = this.angle;
+          this.angle = 1.5708 - this.angle;
+          //we will calculate our angle based on where our user clicked
+          const maxVelocity = this.power * 30.0;
+          let xDir = maxVelocity * Math.cos(this.angle);
+          let zDir = maxVelocity * Math.sin(this.angle);
+          if(zDir > 0){
+            zDir = -1.0*zDir
+          }
+          //for now we will assume a unit vector
+          this.direction_vector = vec3(xDir,10,zDir); // this is the initial directional vector
+          console.log(this.direction_vector);
+          //this.direction_vector = vec3(10,10,0);
         }
         //basketball shot at 10 degrees to the right
         if(this.ball_thrown) {
-            this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
+          this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
         }
         this.create_court(context,program_state,model_transform);
         this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), this.materials.texture_shadow);
