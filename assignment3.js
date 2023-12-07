@@ -42,13 +42,11 @@ export class basketBallScene extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
 
-
-
         this.ball_transform = Mat4.identity();
         this.vertVelocity = 10.61; //temp variable for projectile motion will delete in actual implementation
         this.shapes = {
             //basketball: new defs.Subdivision_Sphere(5),
-            teapot: new Shape_From_File("assets/teapot.obj"),
+            //kkkteapot: new Shape_From_File("assets/teapot.obj"),
             cube : new Cube(),
             torus : new defs.Cylindrical_Tube(10,10),
             torus2 : new defs.Cylindrical_Tube(10,10),
@@ -63,34 +61,31 @@ export class basketBallScene extends Scene {
         this.newRound = true; //tells whether this is new shot for player
         this.hoop_location = Mat4.identity().times(Mat4.translation(0,5.6,-11.7).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
         this.materials = {
-            phong: new Material(new Textured_Phong(), {
-                color: hex_color("#CD5C5C"),
+            phong: new Material(new Shadow_Textured_Phong_Shader(1), {
+                ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
+                color_texture: hex_color("#CD5C5C"),
+                light_depth_texture: null
             }),
-            texture: new Material(new Textured_Phong(), {
-                ambient: 0.8, diffusivity: 0, specularity: 0.1,
-                texture: new Texture("assets/b_texture.png"),
-            }),
-            texture_shadow: new Material(new Shadow_Textured_Phong_Shader(1), {
+            ball_texture: new Material(new Shadow_Textured_Phong_Shader(1), {
                 color: color(.5, .5, .5, 1),
                 ambient: .4, diffusivity: .5, specularity: .5,
                 color_texture: new Texture("assets/b_texture.png"),
                 light_depth_texture: null
             }),
-            court_texture: new Material(new Textured_Phong(), {
-                ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/court.png")
-            }),
-            court_texture_shadow: new Material(new Shadow_Textured_Phong_Shader(1), {
+            court_texture: new Material(new Shadow_Textured_Phong_Shader(1), {
                 color: color(1, 1, 1, 1), ambient: 0.4, diffusivity: 0.5, specularity: 0.5, smoothness: 64,
                 color_texture: new Texture("assets/court.png"),
                 light_depth_texture: null
             }),
-            backboard_texture: new Material(new Textured_Phong(), {
+            backboard_texture: new Material(new Shadow_Textured_Phong_Shader(1), {
                 ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/Backboard.png")
+                color_texture: new Texture("assets/Backboard.png"),
+                light_depth_texture: null
             }),
-            rim_texture: new Material(new Textured_Phong(), {
+            rim_texture: new Material(new Shadow_Textured_Phong_Shader(1), {
+                ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
                 color: hex_color("#FF5F15"),
+                light_depth_texture: null
             }),
             rim_texture1: new Material(new Textured_Phong(), {
                 color: hex_color("000000"),
@@ -118,12 +113,17 @@ export class basketBallScene extends Scene {
             light_src: new Material(new Phong_Shader(), {
                 color: color(1, 1, 1, 1), ambient: 1, diffusivity: 0, specularity: 0
             }),
-            floor : new Material(new Shadow_Textured_Phong_Shader(1), {
-                color: color(1, 1, 1, 1), ambient: 0.3, diffusivity: 0.6, specularity: 0.4, smoothness: 64,
-                color_texture: null,
+            stars : new Material(new Shadow_Textured_Phong_Shader(1), {
+                color: color(.5, .5, .5, 1),
+                ambient: .4, diffusivity: .5, specularity: .5,
+                color_texture: new Texture("assets/stars.png"),
                 light_depth_texture: null
-            })
+    
+            }),
+            pure : new Material(new Color_Phong_Shader(), {
+            }),
 
+    
 
         }
 
@@ -133,6 +133,23 @@ export class basketBallScene extends Scene {
         this.direction_vector = vec3(0,0,0);
         this.ball_thrown = false;
         this.current_direction  = vec3(0,0,0); // The direction we are looking at
+        this.angle = 0.0;
+        this.power = 0.0;
+
+
+        /* DEMO CODE*/
+
+        // For the floor or other plain objects
+        this.floor = new Material(new Shadow_Textured_Phong_Shader(1), {
+            color: color(1, 1, 1, 1), ambient: 0.3, diffusivity: 0.6, specularity: 0.4, smoothness: 64,
+            color_texture: null,
+            light_depth_texture: null
+        })
+        // For the first pass
+        this.pure = new Material(new Color_Phong_Shader(), {
+        })
+
+        /* END DEMO CODE*/
     }
 
     // The way we will calculate collision, is by seperating each individual objects and then checking if the ball
@@ -154,9 +171,12 @@ export class basketBallScene extends Scene {
         this.lightDepthTexture = gl.createTexture();
         // Bind it to TinyGraphics
         this.light_depth_texture = new Buffered_Texture(this.lightDepthTexture);
-        this.materials.texture_shadow.light_depth_texture = this.light_depth_texture
-        this.materials.court_texture_shadow.light_depth_texture = this.light_depth_texture
-        this.materials.floor.light_depth_texture = this.light_depth_texture
+        this.materials.ball_texture.light_depth_texture = this.light_depth_texture
+        this.materials.court_texture.light_depth_texture = this.light_depth_texture
+        this.materials.backboard_texture.light_depth_texture = this.light_depth_texture
+        this.materials.phong.light_depth_texture = this.light_depth_texture
+        this.materials.rim_texture.light_depth_texture = this.light_depth_texture
+
 
 
         this.lightDepthTextureSize = LIGHT_DEPTH_TEX_SIZE;
@@ -360,17 +380,18 @@ export class basketBallScene extends Scene {
         let court_transform = model_transform.times(Mat4.scale(17,0.1,30));
 
 
-        this.shapes.cube.draw(context,program_state, court_transform, this.materials.court_texture_shadow);
+        this.shapes.cube.draw(context,program_state, court_transform, shadow_pass ? this.materials.court_texture : this.materials.pure);
 
         //create the pole holding up the hoop
         let pole_transform = model_transform.times(Mat4.translation(0,3,-29))
             .times(Mat4.scale(0.40,3,0.4));
-        this.shapes.cube.draw(context,program_state,pole_transform,this.materials.phong);
+        this.shapes.cube.draw(context,program_state,pole_transform, shadow_pass ? this.materials.phong : this.materials.pure);
 
         let support_transform = model_transform.times(Mat4.translation(0,5.6,-28)).times(Mat4.scale(0.4,0.4,1));
-        this.shapes.cube.draw(context,program_state,support_transform,this.materials.phong);
+        this.shapes.cube.draw(context,program_state,support_transform, shadow_pass ? this.materials.phong : this.materials.pure);
 
         let back_board_transform = model_transform.times(Mat4.translation(0,6,-27).times(Mat4.scale(1.8,1.2,0.1)));
+<<<<<<< HEAD
         this.shapes.cube.draw(context,program_state,back_board_transform,this.materials.backboard_texture);
         let rim_transform = model_transform.times(Mat4.translation(0,5.0,-26).times(Mat4.scale(1,0.50,1).times(Mat4.rotation(3.14/2,1,0,0))));
         this.shapes.torus.draw(context,program_state,rim_transform,this.materials.rim_texture);
@@ -393,6 +414,28 @@ export class basketBallScene extends Scene {
         // this.shapes.cube.draw(context,program_state,back_board_transform_1,this.materials.backboard_texture);
         // let rim_transform_1 = model_transform.times(Mat4.translation(0,5.15,26).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
         // this.shapes.torus.draw(context,program_state,rim_transform_1,this.materials.rim_texture);
+=======
+        this.shapes.cube.draw(context,program_state,back_board_transform,shadow_pass ? this.materials.backboard_texture : this.materials.pure);
+        let rim_transform = model_transform.times(Mat4.translation(0,5.15,-26).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
+        this.shapes.torus.draw(context,program_state,rim_transform, shadow_pass ? this.materials.rim_texture: this.materials.pure);
+
+
+        //create the pole holding up the hoop
+        let pole_transform_1 = model_transform.times(Mat4.translation(0,3,29))
+        .times(Mat4.scale(0.40,3,0.4));
+        this.shapes.cube.draw(context,program_state,pole_transform_1,shadow_pass ? this.materials.phong : this.materials.pure);
+
+        let support_transform_1 = model_transform.times(Mat4.translation(0,5.6,28)).times(Mat4.scale(0.4,0.4,1));
+        this.shapes.cube.draw(context,program_state,support_transform_1,shadow_pass ? this.materials.phong : this.materials.pure);
+
+        let back_board_transform_1 = model_transform.times(Mat4.translation(0,6,27).times(Mat4.scale(1.8,1.2,0.1)));
+        this.shapes.cube.draw(context,program_state,back_board_transform_1,shadow_pass ? this.materials.backboard_texture : this.materials.pure);
+        let rim_transform_1 = model_transform.times(Mat4.translation(0,5.15,26).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
+        this.shapes.torus.draw(context,program_state,rim_transform_1,shadow_pass ? this.materials.rim_texture: this.materials.pure);
+
+
+        this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), shadow_pass ? this.materials.ball_texture : this.materials.pure);
+>>>>>>> 9fafdaa188b90e0aa5b86133f06facd36802ebe3
 
 
         // // left side
@@ -428,57 +471,17 @@ export class basketBallScene extends Scene {
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
         this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
-    }
+        this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true});
+      }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
-    render_scene(context, program_state, shadow_pass, draw_light_source=false, draw_shadow=false) {
-        // shadow_pass: true if this is the second pass that draw the shadow.
-        // draw_light_source: true if we want to draw the light source.
-        // draw_shadow: true if we want to draw the shadow
-
-        let light_position = this.light_position;
-        let light_color = this.light_color;
-        const t = program_state.animation_time;
-
-        program_state.draw_shadow = draw_shadow;
-
-        if (draw_light_source && shadow_pass) {
-            this.shapes.sphere.draw(context, program_state,
-                Mat4.translation(light_position[0], light_position[1], light_position[2]).times(Mat4.scale(.5,.5,.5)),
-                this.light_src.override({color: light_color}));
-        }
-
-        for (let i of [-1, 1]) { // Spin the 3D model shapes as well.
-            const model_transform = Mat4.translation(2 * i, 3, 0)
-                .times(Mat4.rotation(t / 1000, -1, 2, 0))
-                .times(Mat4.rotation(-Math.PI / 2, 1, 0, 0));
-            this.shapes.teapot.draw(context, program_state, model_transform, this.pure);
-        }
-
-       /* let model_trans_floor = Mat4.scale(8, 0.1, 5);
-        let model_trans_ball_0 = Mat4.translation(0, 1, 0);
-        let model_trans_ball_1 = Mat4.translation(5, 1, 0);
-        let model_trans_ball_2 = Mat4.translation(-5, 1, 0);
-        let model_trans_ball_3 = Mat4.translation(0, 1, 3);
-        let model_trans_ball_4 = Mat4.translation(0, 1, -3);
-        let model_trans_wall_1 = Mat4.translation(-8, 2 - 0.1, 0).times(Mat4.scale(0.33, 2, 5));
-        let model_trans_wall_2 = Mat4.translation(+8, 2 - 0.1, 0).times(Mat4.scale(0.33, 2, 5));
-        let model_trans_wall_3 = Mat4.translation(0, 2 - 0.1, -5).times(Mat4.scale(8, 2, 0.33));
-        this.shapes.cube.draw(context, program_state, model_trans_floor, shadow_pass? this.floor : this.pure);
-        this.shapes.cube.draw(context, program_state, model_trans_wall_1, shadow_pass? this.floor : this.pure);
-        this.shapes.cube.draw(context, program_state, model_trans_wall_2, shadow_pass? this.floor : this.pure);
-        this.shapes.cube.draw(context, program_state, model_trans_wall_3, shadow_pass? this.floor : this.pure);
-        this.shapes.torus.draw(context, program_state, model_trans_ball_0, shadow_pass? this.floor : this.pure);
-        this.shapes.sphere.draw(context, program_state, model_trans_ball_1, shadow_pass? this.floor : this.pure);
-        this.shapes.sphere.draw(context, program_state, model_trans_ball_2, shadow_pass? this.floor : this.pure);
-        this.shapes.sphere.draw(context, program_state, model_trans_ball_3, shadow_pass? this.floor : this.pure);
-        this.shapes.sphere.draw(context, program_state, model_trans_ball_4, shadow_pass? this.floor : this.pure);*/
-    }
-
+  
+    
     display(context, program_state) {
         const t = program_state.animation_time;
         this.t = program_state.animation_time / 1000;
         this.dt = program_state.animation_delta_time / 1000;
         const gl = context.context;
+        let model_transform = Mat4.identity();
 
         if (!this.init_ok) {
             const ext = gl.getExtension('WEBGL_depth_texture');
@@ -491,55 +494,62 @@ export class basketBallScene extends Scene {
         }
 
         if (!context.scratchpad.controls) { //only once per instance of our game
+<<<<<<< HEAD
           // context.scratchpad.controls = 1;
           this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
           // context.scratchpad.controls = 1;
+=======
+          context.scratchpad.controls = 1;
+          this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
+          //context.scratchpad.controls = 1;
+>>>>>>> 9fafdaa188b90e0aa5b86133f06facd36802ebe3
           // Define the global camera and projection matrices, which are stored in program_state.
           let LookAt = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
           program_state.set_camera(LookAt);  
           let canvas = context.canvas;
-          const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>{
-              vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
-                  (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
-            }
+            const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
+                vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
+                    (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
             canvas.addEventListener("mousedown", e => {
-            e.preventDefault();
-            //basically, this will get the initial mouse coordinates
-            //kinda unused for now except for getting initial mouse info
-            const rect = canvas.getBoundingClientRect();
-            console.log("mouse down");
-            console.log("e.clientX: " + e.clientX);
-            //console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
-            console.log("e.clientY: " + e.clientY);
-            //console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
-            //console.log("mouse_position(e): " + mouse_position(e));
-            this.initialMPosition = vec(e.clientX, e.clientY);
+              e.preventDefault();
+              //basically, this will get the initial mouse coordinates
+              //kinda unused for now except for getting initial mouse info
+              const rect = canvas.getBoundingClientRect();
+              console.log("mouse down");
+              console.log("e.clientX: " + e.clientX);
+              //console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
+              console.log("e.clientY: " + e.clientY);
+              //console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
+              //console.log("mouse_position(e): " + mouse_position(e));
+              this.initialMPosition = vec(e.clientX, e.clientY);
 
           });
           canvas.addEventListener("mouseup",(e)=>{
             //this will get our new coords basically allowing us to calculate the new angle
             //our change in angle based on our new coords
+            const rect = canvas.getBoundingClientRect();
             console.log("mouse up")
             console.log("e.clientX: "+e.clientX);
             console.log("e.clienY: "+e.clientY);
-            const changeInX = Math.abs(e.clientX-545.0); //545 is basically the middle of screen(where ball is)
+            const screenPort = mouse_position(e);
+            console.log(screenPort);
+            const changeInX = Math.abs(screenPort[0]); //545 is basically the middle of screen(where ball is)
             console.log("changeInX: "+changeInX);
-            const changeInY = Math.abs(600.0 - e.clientY); //600 is basically bottom of our screen(where ball is)
+            const changeInY = Math.abs(screenPort[1] - -1.0); //600 is basically bottom of our screen(where ball is)
             console.log("changeInY: "+changeInY);
             let changeAngle = Math.atan(changeInX/changeInY); //we will only use our change in X to calculate angle 
-            if(e.clientX - 545.0 < 0){
+            if(screenPort[0] < 0){
               changeAngle = -1.0 * changeAngle;
             }//how much our angle was changed by our user clicking on screen
             //initially basketball is facing where camera is pointing (this is pre-merge info)
             console.log("changeAngle: "+changeAngle);
             const distance = Math.sqrt((changeInX**2)+(changeInY**2));
-            this.power = 100.0 * (distance/290.0); //calculate power based on distance mouse is away from ball
-            if(this.power > 100.0){
-              this.power = 100.0;
+            this.power = distance * 3.0; //calculate power based on distance mouse is away from ball
+            if(this.power > 1.0){
+              this.power = 1.0;
             }
-            this.power = this.power/100.0; //convert into percent            
+            console.log("POWER:" + this.power)            
             this.angle += changeAngle; //this variable stores the angle gotten from clicking the screen
-            this.fired = true; //variable letting us know if the user has fired
           })
           // Define the global camera and projection matrices, which are stored in program_state.
           program_state.set_camera(Mat4.look_at(
@@ -584,6 +594,7 @@ export class basketBallScene extends Scene {
         program_state.light_tex_mat = light_proj_mat;
         program_state.view_mat = light_view_mat;
         program_state.projection_transform = light_proj_mat;
+        this.create_court(context,program_state,model_transform, false, false, false);
 
 
 
@@ -594,30 +605,46 @@ export class basketBallScene extends Scene {
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         program_state.view_mat = program_state.camera_inverse;
         program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 0.5, 500);
+        this.create_court(context,program_state,model_transform, true, true, true);
 
 
 
-
-        let model_transform = Mat4.identity();
         //randomize our basketball position (currently commented out to test basketball shooting)
         if (this.newRound){
           this.round_setup(model_transform,program_state);
           
         }
-        this.create_court(context,program_state,model_transform);
+
 
         // The calculation for the thrown ball has changed slightly we now look at the directional vector rather than the angles
+<<<<<<< HEAD
         if(this.t > 3.0 && !this.ball_thrown ) {
             this.ball_thrown = true;// ball is thrown over here
             this.direction_vector = vec3(2,7,-20); // this is the initial directional vector
+=======
+        if(!this.ball_thrown) { //only calculates angle when ball is not shot
+          console.log(this.angle)
+          const direction = this.angle;
+          this.angle = 1.5708 - this.angle;
+          //we will calculate our angle based on where our user clicked
+          const maxVelocity = this.power * 30.0;
+          let xDir = maxVelocity * Math.cos(this.angle);
+          let zDir = maxVelocity * Math.sin(this.angle);
+          if(zDir > 0){
+            zDir = -1.0*zDir
+          }
+          //for now we will assume a unit vector
+          this.direction_vector = vec3(xDir,10,zDir); // this is the initial directional vector
+          console.log(this.direction_vector);
+          //this.direction_vector = vec3(10,10,0);
+>>>>>>> 9fafdaa188b90e0aa5b86133f06facd36802ebe3
         }
         //basketball shot at 10 degrees to the right
         if(this.ball_thrown) {
-            this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
+          this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
         }
-        this.create_court(context,program_state,model_transform);
-        this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), this.materials.texture_shadow);
 
+        
         //this.create_stadium(context, program_state, model_transform);
         }
 }
