@@ -87,8 +87,10 @@ export class basketBallScene extends Scene {
                 color: hex_color("#CD5C5C"),
             }),
             arrow: new Material(new Textured_Phong(),{
-              color: hex_color("#90FF90"), ambient: 1.0,
-              diffusivity: 0.0,
+              color: hex_color("#90FF90"), 
+              ambient: 1.0,
+              diffusivity: 0, 
+              diffuse: 0
             }),
             texture: new Material(new Textured_Phong(), {
                 ambient: 0.8, diffusivity: 0, specularity: 0.1,
@@ -157,6 +159,7 @@ export class basketBallScene extends Scene {
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 0), vec3(0,5.6,-11.7), vec3(0, 10, 0));
         this.environments = 0;
+        this.color =  hex_color("#FFFFFF");
         this.init_ok = false;
         this.direction_vector = vec3(0,0,0);
         this.ball_thrown = false;
@@ -165,19 +168,6 @@ export class basketBallScene extends Scene {
         this.power = 0.0;
 
 
-        /* DEMO CODE*/
-
-        // For the floor or other plain objects
-        this.floor = new Material(new Shadow_Textured_Phong_Shader(1), {
-            color: color(1, 1, 1, 1), ambient: 0.3, diffusivity: 0.6, specularity: 0.4, smoothness: 64,
-            color_texture: null,
-            light_depth_texture: null
-        })
-        // For the first pass
-        this.pure = new Material(new Color_Phong_Shader(), {
-        })
-
-        /* END DEMO CODE*/
     }
 
     // The way we will calculate collision, is by seperating each individual objects and then checking if the ball
@@ -488,14 +478,17 @@ export class basketBallScene extends Scene {
         if (this.environments == 0){
             let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.rotation(1.4,0,1,0)).times(Mat4.scale(60,60,60));
             this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.indoor_texture);
+            this.color = hex_color("#FFFFFF");
         }
         else if(this.environments == 1){
             let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.scale(60,60,60));
             this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.outdoor_texture);
+            this.color = hex_color("#FDB813");
         }
         else{
             let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.scale(60,60,60));
             this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.lake_texture);
+            this.color = hex_color("#909D9E");
         }
     }
     make_control_panel() {
@@ -590,12 +583,7 @@ export class basketBallScene extends Scene {
         // The position of the light
         this.light_position = Mat4.rotation(1500, 0, 1, 0).times(vec4(3, 25, 0, 1));
         // The color of the light
-        this.light_color = color(
-            0.667 + Math.sin(t/500) / 3,
-            0.667 + Math.sin(t/1500) / 3,
-            0.667 + Math.sin(t/3500) / 3,
-            1
-        );
+        this.light_color = this.color;
 
         // This is a rough target of the light.
         // Although the light is point light, we need a target to set the POV of the light
@@ -689,7 +677,7 @@ export class basketBallScene extends Scene {
             this.direction_vector == vec3(1,10,1); 
           }
           this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
-          program_state.set_camera(Mat4.inverse(this.ball_transform).times(Mat4.translation(0,0,-5)));
+          //program_state.set_camera(Mat4.inverse(this.ball_transform).times(Mat4.translation(0,0,-5)));
         }
 
         //this.create_court(context,program_state,model_transform);
