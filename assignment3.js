@@ -379,10 +379,10 @@ export class basketBallScene extends Scene {
       if(Math.random()<0.5){
         yScalar = 1.0;
       }
-      // randomX = Math.floor(xScalar*Math.random() * 14.0);
-      // randomZ = Math.floor(yScalar*Math.random() * 20.0);
-        randomX = 0;
-      randomZ = -6;
+      randomX = Math.floor(xScalar*Math.random() * 14.0);
+      randomZ = Math.floor(yScalar*Math.random() * 20.0);
+      //randomX = 0;
+      //randomZ = -6;
       var ball_location_vector = vec3(0,2.6,-11.7);
       this.ball_transform = model_transform.times(Mat4.translation(randomX,0,randomZ));
       this.newRound = false;
