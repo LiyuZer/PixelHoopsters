@@ -44,7 +44,7 @@ export class basketBallScene extends Scene {
             //basketball: new defs.Subdivision_Sphere(5),
             //kkkteapot: new Shape_From_File("assets/teapot.obj"),
             cube : new Cube(),
-            torus : new defs.Torus(10,10),
+            torus : new defs.Torus(100,100),
             sphere_enclosing: new defs.Subdivision_Sphere(4),
             sphere: new defs.Subdivision_Sphere(6),
             square_2d: new Square(),
@@ -357,7 +357,7 @@ export class basketBallScene extends Scene {
 
         let back_board_transform = model_transform.times(Mat4.translation(0,6,-27).times(Mat4.scale(1.8,1.2,0.1)));
         this.shapes.cube.draw(context,program_state,back_board_transform,shadow_pass ? this.materials.backboard_texture : this.materials.pure);
-        let rim_transform = model_transform.times(Mat4.translation(0,5.15,-26).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
+        let rim_transform = model_transform.times(Mat4.translation(0.05,5.15,-26.25).times(Mat4.scale(0.9,.9,.9).times(Mat4.rotation(3.14/2,1,0,0))));
         this.shapes.torus.draw(context,program_state,rim_transform, shadow_pass ? this.materials.rim_texture: this.materials.pure);
 
 
@@ -495,7 +495,7 @@ export class basketBallScene extends Scene {
 
 
         // The position of the light
-        this.light_position = Mat4.rotation(1500, 0, 1, 0).times(vec4(3, 15, 0, 1));
+        this.light_position = Mat4.rotation(1500, 0, 1, 0).times(vec4(3, 25, 0, 1));
         // The color of the light
         this.light_color = color(
             0.667 + Math.sin(t/500) / 3,
