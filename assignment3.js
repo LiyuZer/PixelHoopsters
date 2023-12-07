@@ -10,6 +10,10 @@ const {
 } = tiny;
 
 const {Cube, Axis_Arrows, Textured_Phong, Phong_Shader, Basic_Shader, Subdivision_Sphere} = defs
+const ground_level = -0.9;
+const  backboardX = [-2, 2];
+const  backboardY = [3.9, 6];
+const  backboardZ = [-27.49, -26.2];
 const Square =
     class Square extends tiny.Vertex_Buffer {
         constructor() {
@@ -67,6 +71,7 @@ export class basketBallScene extends Scene {
             //kkkteapot: new Shape_From_File("assets/teapot.obj"),
             cube : new Cube(),
             torus : new defs.Torus(100,100),
+            cylinder : new defs.Cylindrical_Tube(100,100),
             sphere_enclosing: new defs.Subdivision_Sphere(4),
             sphere: new defs.Subdivision_Sphere(6),
             square_2d: new Square(),
@@ -109,6 +114,9 @@ export class basketBallScene extends Scene {
                 ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
                 color: hex_color("#FF5F15"),
                 light_depth_texture: null
+            }),
+            rim_texture1: new Material(new Textured_Phong(), {
+                color: hex_color("000000"),
             }),
             wall_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#C0C0C0"),
@@ -174,9 +182,30 @@ export class basketBallScene extends Scene {
 
     // The way we will calculate collision, is by seperating each individual objects and then checking if the ball
     // collides with that object, if it does then we have a collision, and by taking the normal of the surface and teh
-    // angle of incidence(We expect the collision to be fully elastic) we will relfect the balls in another direction/
-    static intersect_ground(p, margin = 0) {
-        return p[1] < -1.0;
+    // angle of incidence(We expect the collision to be fully elastic) we will reflect the balls in another direction/
+    static intersect_ground(p) {
+        return p[1] < ground_level; // We technically don't have to check if it is in the court as when the basketball reaches a certain height without scoring
+        // we can reset it
+    }
+    static intersect_backBoard(p){
+        //Translate by -1.5 in the y direction as well
+        // Mat4.translation(0,6,-27).times(Mat4.scale(1.8,1.2,0.1)
+        return (p[0] >= backboardX[0] && p[0] <= backboardX[1]) && (p[1] >= backboardY[0] && p[1] <= backboardY[1]) && (p[2] >= backboardZ[0] && p[2] <= backboardZ[1]);
+    }
+    static intersect_rim(p) {
+        // Constants for the cylinder's dimensions and position
+        const centerX = 0, centerY = 3.5, centerZ = -26;
+        const radius = 0.5, height = 0.25;
+        var xzDistance = 0
+        var l2_square = p[0] * p[0] + (p[2] - centerZ) * (p[2] - centerZ);
+        if(l2_square == 0.0) {
+            xzDistance = 0.0;
+        }
+        else{
+            xzDistance = Math.sqrt(l2_square);
+        }
+        var yDistance = Math.abs(p[1] - centerY);
+        return ((xzDistance <= radius && xzDistance >= radius * 0.8) || (xzDistance >= radius && xzDistance <= radius + 0.1 ) )&& yDistance <= height;
     }
 
 
@@ -281,35 +310,69 @@ export class basketBallScene extends Scene {
 
     //this function returns basketball's motion along its projectile path
     //TODO: make this function more general such as when it is not directly facing the net and wind
+
     basketball_thrown(){
-      //assume our mass of ball is 0.624 kg
-      const gravity = 9.81; //force of gravity on ball
-      var point = this.ball_transform.times(vec4(0,0,0,1));
-      var directional_vector = this.direction_vector;
+        //assume our mass of ball is 0.624 kg
+        const gravity = 9.81; //force of gravity on ball
+        var point = this.ball_transform.times(vec4(0,0,0,1));
+        var directional_vector = this.direction_vector;
         // Constants for air resistance
-        const rho = 0.005; // Air density (kg/m^3) at sea level
+        const rho = 0.003; // Air density (kg/m^3) at sea level
         const Cd = 0.2; // Drag coefficient for a sphere
         const A = 2.4567; // Cross-sectional area of the ball
+        const deltaTime = this.dt ; // Storing this.dt in deltaTime
 
         if(basketBallScene.intersect_ground(point)){
-          var negated_vec = directional_vector.times(-1);
-          directional_vector =  (vec3(0,1,0).times(2 * (vec3(0,1,0).dot(negated_vec)))).minus(negated_vec);
-          const position_vector = vec3(directional_vector[0] * this.dt, directional_vector[1] * this.dt - (9.81/2) * this.dt * this.dt , directional_vector[2] * this.dt );
+            var negated_vec = directional_vector.times(-1);
+            directional_vector = (vec3(0,1,0).times(2 * (vec3(0,1,0).dot(negated_vec)))).minus(negated_vec);
+            const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity/2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
-            this.direction_vector = vec3(directional_vector[0], directional_vector[1]- (9.81) * this.dt, directional_vector[2]).plus(dragForceVector);
-          this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1],position_vector[2]));
-      }
-      else{
-          const position_vector = vec3(directional_vector[0] * this.dt, directional_vector[1] * this.dt - (9.81/2) * this.dt * this.dt , directional_vector[2] * this.dt );
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.8);
+            this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1] + (ground_level - point[1]), position_vector[2] ));
+        }
+        else if(basketBallScene.intersect_backBoard(point)) {
+            var negated_vec = directional_vector.times(-1);
+            directional_vector = (vec3(0, 0, 1).times(2 * (vec3(0, 0, 1).dot(negated_vec)))).minus(negated_vec);
+            const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity / 2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
-            this.direction_vector = vec3(directional_vector[0], directional_vector[1]- (9.81) * this.dt, directional_vector[2]).plus(dragForceVector);
-          this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1],position_vector[2]));
-      }
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.6);
+            if (backboardZ[1] - point[2] > 0) // This is the z location
+            {
+                position_vector[2] = backboardZ[1] - point[2] + position_vector[2];
+            }
+            this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
+        }
+        else if(basketBallScene.intersect_rim(point)){
+            var negated_vec = directional_vector.times(-1);
+            var normal = point.minus(vec3(0,3.65,-26)).normalized();
+            normal = vec3(normal[0], normal[1], normal[2]);
+            console.log(((normal.dot(negated_vec))));
+            directional_vector = (normal.times(2 * (normal.dot(negated_vec)))).minus(negated_vec);
+            const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity / 2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
+            const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
+            const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
+            const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.6);
+            normal = normal.times(0.5).plus(vec3(0,3.65,-26));
+            this.ball_transform = Mat4.identity().times(Mat4.translation(normal[0], normal[1], normal[2]));
+            this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
+
+        }
+        else{
+            const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity/2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
+            const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
+            const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
+            const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector);
+            this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
+        }
     }
+
+
     create_stadium(context, program_state, model_transform) {
         // existing court creation code...
     
@@ -326,8 +389,11 @@ export class basketBallScene extends Scene {
       if(Math.random()<0.5){
         yScalar = 1.0;
       }
-      randomX = Math.floor(xScalar*Math.random() * 14.0);
-      randomZ = Math.floor(yScalar*Math.random() * 20.0);
+      // randomX = Math.floor(xScalar*Math.random() * 14.0);
+      // randomZ = Math.floor(yScalar*Math.random() * 20.0);
+        randomX = 0;
+      randomZ = -6;
+      var ball_location_vector = vec3(0,2.6,-11.7);
       this.ball_transform = model_transform.times(Mat4.translation(randomX,0,randomZ));
       this.newRound = false;
       
@@ -392,22 +458,11 @@ export class basketBallScene extends Scene {
 
         let back_board_transform = model_transform.times(Mat4.translation(0,6,-27).times(Mat4.scale(1.8,1.2,0.1)));
         this.shapes.cube.draw(context,program_state,back_board_transform,shadow_pass ? this.materials.backboard_texture : this.materials.pure);
-        let rim_transform = model_transform.times(Mat4.translation(0.05,5.15,-26.25).times(Mat4.scale(0.9,.9,.9).times(Mat4.rotation(3.14/2,1,0,0))));
-        this.shapes.torus.draw(context,program_state,rim_transform, shadow_pass ? this.materials.rim_texture: this.materials.pure);
+        // let rim_transform = model_transform.times(Mat4.translation(0,5.0,-26).times(Mat4.scale(1,0.25,1).times(Mat4.rotation(3.14/2,1,0,0))));
+        let rim_transform1 = model_transform.times(Mat4.translation(0,5.0,-26).times(Mat4.scale(1.4,2,1.4).times(Mat4.rotation(3.14/2,1,0,0))));
 
-
-        //create the pole holding up the hoop
-        let pole_transform_1 = model_transform.times(Mat4.translation(0,3,29))
-        .times(Mat4.scale(0.40,3,0.4));
-        this.shapes.cube.draw(context,program_state,pole_transform_1,shadow_pass ? this.materials.phong : this.materials.pure);
-
-        let support_transform_1 = model_transform.times(Mat4.translation(0,5.6,28)).times(Mat4.scale(0.4,0.4,1));
-        this.shapes.cube.draw(context,program_state,support_transform_1,shadow_pass ? this.materials.phong : this.materials.pure);
-
-        let back_board_transform_1 = model_transform.times(Mat4.translation(0,6,27).times(Mat4.scale(1.8,1.2,0.1)));
-        this.shapes.cube.draw(context,program_state,back_board_transform_1,shadow_pass ? this.materials.backboard_texture : this.materials.pure);
-        let rim_transform_1 = model_transform.times(Mat4.translation(0,5.15,26).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
-        this.shapes.torus.draw(context,program_state,rim_transform_1,shadow_pass ? this.materials.rim_texture: this.materials.pure);
+        this.shapes.torus.draw(context,program_state,rim_transform1, shadow_pass ? this.materials.rim_texture: this.materials.pure);
+        // this.shapes.cylinder.draw(context,program_state,rim_transform, shadow_pass ? this.materials.rim_texture: this.materials.pure);
 
 
         this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), shadow_pass ? this.materials.ball_texture : this.materials.pure);
@@ -623,7 +678,7 @@ export class basketBallScene extends Scene {
           this.arrowColor = hex_color("#" + newColor1 + newColor3 + newColor2); 
           console.log("#" + newColor1.toString(16) + newColor3.toString(16) + newColor2.toString(16))
           //for now we will assume a unit vector
-          this.direction_vector = vec3(xDir,10,zDir); // this is the initial directional vector
+          this.direction_vector = vec3(xDir,6,zDir); // this is the initial directional vector
           //this.arrow_transform = this.arrow_transform.times(Mat4.translation(0,0,-0.433015))
           //.times(Mat4.rotation(this.angle,0,1,0)).times(Mat4.translation(0,0,0.433015));
           //this.direction_vector = vec3(10,10,0);
