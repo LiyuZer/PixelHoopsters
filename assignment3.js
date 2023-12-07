@@ -391,30 +391,6 @@ export class basketBallScene extends Scene {
         this.shapes.cube.draw(context,program_state,support_transform, shadow_pass ? this.materials.phong : this.materials.pure);
 
         let back_board_transform = model_transform.times(Mat4.translation(0,6,-27).times(Mat4.scale(1.8,1.2,0.1)));
-<<<<<<< HEAD
-        this.shapes.cube.draw(context,program_state,back_board_transform,this.materials.backboard_texture);
-        let rim_transform = model_transform.times(Mat4.translation(0,5.0,-26).times(Mat4.scale(1,0.50,1).times(Mat4.rotation(3.14/2,1,0,0))));
-        this.shapes.torus.draw(context,program_state,rim_transform,this.materials.rim_texture);
-        let rim_transform2 = model_transform.times(Mat4.translation(0,5.25,-26).times(Mat4.scale(1,0.075,1).times(Mat4.rotation(3.14/2,1,0,0))));
-        this.shapes.torus.draw(context,program_state,rim_transform2,this.materials.rim_texture1);
-        console.log(rim_transform.times(vec4(0,0,0,1)));
-        console.log(rim_transform2.times(vec4(0,0,0,1)));
-
-
-        //
-        // //create the pole holding up the hoop
-        // let pole_transform_1 = model_transform.times(Mat4.translation(0,3,29))
-        // .times(Mat4.scale(0.40,3,0.4));
-        // this.shapes.cube.draw(context,program_state,pole_transform_1,this.materials.phong);
-        //
-        // let support_transform_1 = model_transform.times(Mat4.translation(0,5.6,28)).times(Mat4.scale(0.4,0.4,1));
-        // this.shapes.cube.draw(context,program_state,support_transform_1,this.materials.phong);
-        //
-        // let back_board_transform_1 = model_transform.times(Mat4.translation(0,6,27).times(Mat4.scale(1.8,1.2,0.1)));
-        // this.shapes.cube.draw(context,program_state,back_board_transform_1,this.materials.backboard_texture);
-        // let rim_transform_1 = model_transform.times(Mat4.translation(0,5.15,26).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
-        // this.shapes.torus.draw(context,program_state,rim_transform_1,this.materials.rim_texture);
-=======
         this.shapes.cube.draw(context,program_state,back_board_transform,shadow_pass ? this.materials.backboard_texture : this.materials.pure);
         let rim_transform = model_transform.times(Mat4.translation(0,5.15,-26).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
         this.shapes.torus.draw(context,program_state,rim_transform, shadow_pass ? this.materials.rim_texture: this.materials.pure);
@@ -435,7 +411,6 @@ export class basketBallScene extends Scene {
 
 
         this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), shadow_pass ? this.materials.ball_texture : this.materials.pure);
->>>>>>> 9fafdaa188b90e0aa5b86133f06facd36802ebe3
 
 
         // // left side
@@ -494,15 +469,9 @@ export class basketBallScene extends Scene {
         }
 
         if (!context.scratchpad.controls) { //only once per instance of our game
-<<<<<<< HEAD
-          // context.scratchpad.controls = 1;
-          this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
-          // context.scratchpad.controls = 1;
-=======
           context.scratchpad.controls = 1;
           this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
           //context.scratchpad.controls = 1;
->>>>>>> 9fafdaa188b90e0aa5b86133f06facd36802ebe3
           // Define the global camera and projection matrices, which are stored in program_state.
           let LookAt = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
           program_state.set_camera(LookAt);  
@@ -617,11 +586,6 @@ export class basketBallScene extends Scene {
 
 
         // The calculation for the thrown ball has changed slightly we now look at the directional vector rather than the angles
-<<<<<<< HEAD
-        if(this.t > 3.0 && !this.ball_thrown ) {
-            this.ball_thrown = true;// ball is thrown over here
-            this.direction_vector = vec3(2,7,-20); // this is the initial directional vector
-=======
         if(!this.ball_thrown) { //only calculates angle when ball is not shot
           console.log(this.angle)
           const direction = this.angle;
@@ -637,7 +601,6 @@ export class basketBallScene extends Scene {
           this.direction_vector = vec3(xDir,10,zDir); // this is the initial directional vector
           console.log(this.direction_vector);
           //this.direction_vector = vec3(10,10,0);
->>>>>>> 9fafdaa188b90e0aa5b86133f06facd36802ebe3
         }
         //basketball shot at 10 degrees to the right
         if(this.ball_thrown) {
