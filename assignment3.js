@@ -66,6 +66,8 @@ export class basketBallScene extends Scene {
         this.ball_transform = Mat4.identity();
         this.arrowColor = hex_color("#90FF90");
         this.vertVelocity = 10.61; //temp variable for projectile motion will delete in actual implementation
+        this.wind_strength = Math.random();
+        this.wind_direction = vec3(Math.random(), Math.random(), Math.random())
         this.shapes = {
             //basketball: new defs.Subdivision_Sphere(5),
             //kkkteapot: new Shape_From_File("assets/teapot.obj"),
@@ -315,6 +317,7 @@ export class basketBallScene extends Scene {
         //assume our mass of ball is 0.624 kg
         const gravity = 9.81; //force of gravity on ball
         var point = this.ball_transform.times(vec4(0,0,0,1));
+        var wind = this.wind_direction * this.wind_strength
         var directional_vector = this.direction_vector;
         // Constants for air resistance
         const rho = 0.003; // Air density (kg/m^3) at sea level
@@ -407,6 +410,8 @@ export class basketBallScene extends Scene {
         const arrowLocation = Mat4.look_at(vec3(randomX + 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
         this.arrow_transform = Mat4.inverse(arrowLocation);
+        this.wind_strength = Math.random();
+        this.wind_direction = vec3(Math.random(), Math.random(), 0.0)
         //this.ball_transform = this.ball_transform.times(Mat4.translation(Math.cos(angle),-1,Math.sin(angle)));
         //console.log(Mat4.look_at(vec3(randomX - 4*Math.cos(angle), 1, randomZ + 4*Math.sin(angle)), vec3(0,2.6,-15.7), vec3(0, 1.0, 0)))
       }
@@ -499,6 +504,12 @@ export class basketBallScene extends Scene {
     }
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
+        this.live_string(box => box.textContent = "- Wind Strength: " + this.wind_strength.toFixed(2)) 
+        this.new_line();
+        this.live_string(box => box.textContent = "- Wind Direction up/down: " + this.wind_direction[0].toFixed(2))
+        this.new_line();
+        this.live_string(box => box.textContent = "- Wind Direction left/right: " + this.wind_direction[1].toFixed(2))
+        this.new_line();
         this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
         this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true});
         this.key_triggered_button("change POV", ["p"],() => {this.camerapov != this.camerapov});
