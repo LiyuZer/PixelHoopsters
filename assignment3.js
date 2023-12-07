@@ -71,6 +71,7 @@ export class basketBallScene extends Scene {
             //kkkteapot: new Shape_From_File("assets/teapot.obj"),
             cube : new Cube(),
             torus : new defs.Torus(100,100),
+            cylinder : new defs.Cylindrical_Tube(100,100),
             sphere_enclosing: new defs.Subdivision_Sphere(4),
             sphere: new defs.Subdivision_Sphere(6),
             square_2d: new Square(),
@@ -193,8 +194,8 @@ export class basketBallScene extends Scene {
     }
     static intersect_rim(p) {
         // Constants for the cylinder's dimensions and position
-        const centerX = 0, centerY = 3.65, centerZ = -26;
-        const radius = 0.5, height = 0.4;
+        const centerX = 0, centerY = 3.5, centerZ = -26;
+        const radius = 0.5, height = 0.25;
         var xzDistance = 0
         var l2_square = p[0] * p[0] + (p[2] - centerZ) * (p[2] - centerZ);
         if(l2_square == 0.0) {
@@ -454,22 +455,11 @@ export class basketBallScene extends Scene {
 
         let back_board_transform = model_transform.times(Mat4.translation(0,6,-27).times(Mat4.scale(1.8,1.2,0.1)));
         this.shapes.cube.draw(context,program_state,back_board_transform,shadow_pass ? this.materials.backboard_texture : this.materials.pure);
-        let rim_transform = model_transform.times(Mat4.translation(0.05,5.15,-26.25).times(Mat4.scale(0.9,.9,.9).times(Mat4.rotation(3.14/2,1,0,0))));
-        this.shapes.torus.draw(context,program_state,rim_transform, shadow_pass ? this.materials.rim_texture: this.materials.pure);
+        // let rim_transform = model_transform.times(Mat4.translation(0,5.0,-26).times(Mat4.scale(1,0.25,1).times(Mat4.rotation(3.14/2,1,0,0))));
+        let rim_transform1 = model_transform.times(Mat4.translation(0,5.0,-26).times(Mat4.scale(1.4,2,1.4).times(Mat4.rotation(3.14/2,1,0,0))));
 
-
-        //create the pole holding up the hoop
-        let pole_transform_1 = model_transform.times(Mat4.translation(0,3,29))
-        .times(Mat4.scale(0.40,3,0.4));
-        this.shapes.cube.draw(context,program_state,pole_transform_1,shadow_pass ? this.materials.phong : this.materials.pure);
-
-        let support_transform_1 = model_transform.times(Mat4.translation(0,5.6,28)).times(Mat4.scale(0.4,0.4,1));
-        this.shapes.cube.draw(context,program_state,support_transform_1,shadow_pass ? this.materials.phong : this.materials.pure);
-
-        let back_board_transform_1 = model_transform.times(Mat4.translation(0,6,27).times(Mat4.scale(1.8,1.2,0.1)));
-        this.shapes.cube.draw(context,program_state,back_board_transform_1,shadow_pass ? this.materials.backboard_texture : this.materials.pure);
-        let rim_transform_1 = model_transform.times(Mat4.translation(0,5.15,26).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
-        this.shapes.torus.draw(context,program_state,rim_transform_1,shadow_pass ? this.materials.rim_texture: this.materials.pure);
+        this.shapes.torus.draw(context,program_state,rim_transform1, shadow_pass ? this.materials.rim_texture: this.materials.pure);
+        // this.shapes.cylinder.draw(context,program_state,rim_transform, shadow_pass ? this.materials.rim_texture: this.materials.pure);
 
 
         this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), shadow_pass ? this.materials.ball_texture : this.materials.pure);
@@ -684,7 +674,7 @@ export class basketBallScene extends Scene {
           this.arrowColor = hex_color("#" + newColor1 + newColor3 + newColor2); 
           console.log("#" + newColor1.toString(16) + newColor3.toString(16) + newColor2.toString(16))
           //for now we will assume a unit vector
-          this.direction_vector = vec3(xDir,10,zDir); // this is the initial directional vector
+          this.direction_vector = vec3(xDir,6,zDir); // this is the initial directional vector
           //this.arrow_transform = this.arrow_transform.times(Mat4.translation(0,0,-0.433015))
           //.times(Mat4.rotation(this.angle,0,1,0)).times(Mat4.translation(0,0,0.433015));
           //this.direction_vector = vec3(10,10,0);
