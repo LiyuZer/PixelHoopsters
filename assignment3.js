@@ -28,7 +28,26 @@ const Square =
             ]
         }
     }
-
+class Triangle extends Shape {
+  constructor() {
+    // Name the values we'll define per each vertex:
+    super("position", "normal", "texture_coord");
+    // First, specify the vertex positions -- the three point locations of an imaginary triangle:
+    this.arrays.position = [vec3(-0.5, 0, 0), vec3(0.5, 0, 0), vec3(0, 0, -0.86603)];
+    // Next, supply vectors that point away from the triangle face.  They should match up with
+    // the points in the above list.  Normal vectors are needed so the graphics engine can
+    // know if the shape is pointed at light or not, and color it accordingly.
+    this.arrays.normal = [vec3(-0.5, 0, 0), vec3(0.5, 0, 0), vec3(0, 0, -0.86603)];
+    //  lastly, put each point somewhere in texture space too:
+    this.arrays.texture_coord = [Vector.of(-0.5, 0), Vector.of(0.5, 0), Vector.of(0, 0)];
+    // Index into our vertices to connect them into a whole triangle:
+    this.indices = [0, 1, 2];
+        // A position, normal, and texture coord fully describes one "vertex".  What's the "i"th vertex?  Simply
+    // the combined data you get if you look up index "i" of those lists above -- a position, normal vector,
+          // and texture coordinate together.  Lastly we told it how to connect vertex entries into triangles.
+          // Every three indices in "this.indices" traces out one triangle.
+      }
+  }
 export class basketBallScene extends Scene {
     /**
      *  **Base_scene** is a Scene that can be added to any display canvas.
@@ -38,7 +57,10 @@ export class basketBallScene extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
 
+        this.arrow_angle = 0.0
+        this.arrow_transform = Mat4.identity();
         this.ball_transform = Mat4.identity();
+        this.arrowColor = hex_color("#90FF90");
         this.vertVelocity = 10.61; //temp variable for projectile motion will delete in actual implementation
         this.shapes = {
             //basketball: new defs.Subdivision_Sphere(5),
@@ -48,7 +70,7 @@ export class basketBallScene extends Scene {
             sphere_enclosing: new defs.Subdivision_Sphere(4),
             sphere: new defs.Subdivision_Sphere(6),
             square_2d: new Square(),
-
+            triangle: new Triangle(),
             //stands: new defs.Subdivision_Sphere(5), // adjust parameters as needed
             //roof: new defs.Cube(),
             //scorer: new defs.Cube(),
@@ -56,10 +78,16 @@ export class basketBallScene extends Scene {
         this.newRound = true; //tells whether this is new shot for player
         this.hoop_location = Mat4.identity().times(Mat4.translation(0,5.6,-11.7).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
         this.materials = {
-            phong: new Material(new Shadow_Textured_Phong_Shader(1), {
-                ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
-                color_texture: hex_color("#CD5C5C"),
-                light_depth_texture: null
+            phong: new Material(new Textured_Phong(), {
+                color: hex_color("#CD5C5C"),
+            }),
+            arrow: new Material(new Textured_Phong(),{
+              color: hex_color("#90FF90"), ambient: 1.0,
+              diffusivity: 0.0,
+            }),
+            texture: new Material(new Textured_Phong(), {
+                ambient: 0.8, diffusivity: 0, specularity: 0.1,
+                texture: new Texture("assets/b_texture.png"),
             }),
             ball_texture: new Material(new Shadow_Textured_Phong_Shader(1), {
                 color: color(.5, .5, .5, 1),
@@ -310,14 +338,18 @@ export class basketBallScene extends Scene {
         //this.cameraPosition = model_transform.times(Mat4.translation(randomX+2.0*Math.cos(angle), -0.5, randomZ-2.0*Math.sin(angle)))
         //.times(Mat4.translation(-1,-1,0)).times(Mat4.scale(0.8,1,0.8)).times(Mat4.translation(1,1,0));
         const ballLocation = Mat4.look_at(vec3(randomX, 0, randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0))
+        const arrowLocation = Mat4.look_at(vec3(randomX + 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
+        this.arrow_transform = Mat4.inverse(arrowLocation);
         //this.ball_transform = this.ball_transform.times(Mat4.translation(Math.cos(angle),-1,Math.sin(angle)));
         //console.log(Mat4.look_at(vec3(randomX - 4*Math.cos(angle), 1, randomZ + 4*Math.sin(angle)), vec3(0,2.6,-15.7), vec3(0, 1.0, 0)))
       }
       else{
         program_state.set_camera(Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
         const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
+        const arrowLocation = Mat4.look_at(vec3(randomX - 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
+        this.arrow_transform = Mat4.inverse(arrowLocation)
       }
       //program_state.set_camera(Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
     }
@@ -478,12 +510,14 @@ export class basketBallScene extends Scene {
             //initially basketball is facing where camera is pointing (this is pre-merge info)
             console.log("changeAngle: "+changeAngle);
             const distance = Math.sqrt((changeInX**2)+(changeInY**2));
-            this.power = distance * 3.0; //calculate power based on distance mouse is away from ball
+            console.log("A"+distance);
+            this.power = distance * 1.428; //calculate power based on distance mouse is away from ball
             if(this.power > 1.0){
               this.power = 1.0;
             }
             console.log("POWER:" + this.power)            
-            this.angle += changeAngle; //this variable stores the angle gotten from clicking the screen
+            this.angle = changeAngle; //this variable stores the angle gotten from clicking the screen
+            this.update_angle = true;
           })
           // Define the global camera and projection matrices, which are stored in program_state.
           program_state.set_camera(Mat4.look_at(
@@ -551,9 +585,11 @@ export class basketBallScene extends Scene {
 
 
         // The calculation for the thrown ball has changed slightly we now look at the directional vector rather than the angles
-        if(!this.ball_thrown) { //only calculates angle when ball is not shot
+        if(!this.ball_thrown && this.update_angle) { //only calculates angle when ball is not shot
+          this.update_angle = false;
           console.log(this.angle)
-          const direction = this.angle;
+          this.arrow_angle = this.angle * -1.0;
+          console.log(this.arrow_angle)
           this.angle = 1.5708 - this.angle;
           //we will calculate our angle based on where our user clicked
           const maxVelocity = this.power * 30.0;
@@ -562,9 +598,30 @@ export class basketBallScene extends Scene {
           if(zDir > 0){
             zDir = -1.0*zDir
           }
+          //90FF90 is 0 power
+          let greenColor = Number("0x90");
+          let redColor = 139;
+          let newColor1 = (this.power * redColor) + ((1-this.power) * greenColor);
+          newColor1 = Math.round(newColor1);
+          newColor1 = newColor1.toString(16);
+          let newColor2 = ((1-this.power) * greenColor);
+          newColor2 = Math.round(newColor2);
+          newColor2 = newColor2.toString(16);
+          let newColor3 = ((1-this.power) * Number("0xFF"));
+          newColor3 = Math.round(newColor3);
+          newColor3 = newColor3.toString(16);
+          if(newColor2 == "0"){
+            newColor2 = "00"
+          }
+          if(newColor3 == "0"){
+            newColor3 = "00";
+          }
+          this.arrowColor = hex_color("#" + newColor1 + newColor3 + newColor2); 
+          console.log("#" + newColor1.toString(16) + newColor3.toString(16) + newColor2.toString(16))
           //for now we will assume a unit vector
           this.direction_vector = vec3(xDir,10,zDir); // this is the initial directional vector
-          console.log(this.direction_vector);
+          //this.arrow_transform = this.arrow_transform.times(Mat4.translation(0,0,-0.433015))
+          //.times(Mat4.rotation(this.angle,0,1,0)).times(Mat4.translation(0,0,0.433015));
           //this.direction_vector = vec3(10,10,0);
         }
         //basketball shot at 10 degrees to the right
@@ -572,7 +629,11 @@ export class basketBallScene extends Scene {
           this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
         }
 
-        
+        this.create_court(context,program_state,model_transform);
+        this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), this.materials.texture_shadow);
+        this.shapes.triangle.draw(context,program_state,this.arrow_transform.times(Mat4.translation(0,0,-0.433015))
+        .times(Mat4.rotation(this.arrow_angle,0,1,0)).times(Mat4.translation(0,0,0.433015))
+        ,this.materials.arrow.override({color:this.arrowColor}));
         //this.create_stadium(context, program_state, model_transform);
         }
 }
