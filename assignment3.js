@@ -629,8 +629,8 @@ export class basketBallScene extends Scene {
           this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
         }
 
-        this.create_court(context,program_state,model_transform);
-        this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), this.materials.texture_shadow);
+        //this.create_court(context,program_state,model_transform);
+        //this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), this.materials.texture_shadow);
         this.shapes.triangle.draw(context,program_state,this.arrow_transform.times(Mat4.translation(0,0,-0.433015))
         .times(Mat4.rotation(this.arrow_angle,0,1,0)).times(Mat4.translation(0,0,0.433015))
         ,this.materials.arrow.override({color:this.arrowColor}));
