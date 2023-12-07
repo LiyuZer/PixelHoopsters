@@ -315,6 +315,7 @@ export class basketBallScene extends Scene {
     
     }
     round_setup(model_transform,program_state,context){
+      this.ball_thrown = false;
       let randomX = 0.0;
       let randomZ = 0.0;
       let xScalar = 1.0;
@@ -351,6 +352,8 @@ export class basketBallScene extends Scene {
         this.ball_transform = Mat4.inverse(ballLocation);
         this.arrow_transform = Mat4.inverse(arrowLocation)
       }
+      this.direction_vector = vec3(0,0,0);
+      this.angle = 0.0;
       //program_state.set_camera(Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
     }
 
@@ -444,6 +447,7 @@ export class basketBallScene extends Scene {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
         this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
         this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true});
+        this.key_triggered_button("New Round!", ["n"], ()=>{this.newRound = true});
       }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
   
@@ -626,7 +630,11 @@ export class basketBallScene extends Scene {
         }
         //basketball shot at 10 degrees to the right
         if(this.ball_thrown) {
+          if(this.direction_vector == vec3(0,0,0)){ //in case our direction vector has no magnitude
+            this.direction_vector == vec3(1,10,1); 
+          }
           this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
+          program_state.set_camera(Mat4.inverse(this.ball_transform).times(Mat4.translation(0,0,-5)));
         }
 
         //this.create_court(context,program_state,model_transform);
