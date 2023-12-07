@@ -146,7 +146,7 @@ export class basketBallScene extends Scene {
     
 
         }
-
+        this.camerapov = true;
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 0), vec3(0,5.6,-11.7), vec3(0, 10, 0));
         this.environments = 0;
         this.init_ok = false;
@@ -444,6 +444,7 @@ export class basketBallScene extends Scene {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
         this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
         this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true});
+        this.key_triggered_button("change POV", ["p"],() => {this.camerapov != this.camerapov});
       }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
   
@@ -467,8 +468,7 @@ export class basketBallScene extends Scene {
 
         if (!context.scratchpad.controls) { //only once per instance of our game
           context.scratchpad.controls = 1;
-          this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
-          //context.scratchpad.controls = 1;
+          //this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
           // Define the global camera and projection matrices, which are stored in program_state.
           let LookAt = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
           program_state.set_camera(LookAt);  
@@ -512,8 +512,8 @@ export class basketBallScene extends Scene {
             const distance = Math.sqrt((changeInX**2)+(changeInY**2));
             console.log("A"+distance);
             this.power = distance * 1.428; //calculate power based on distance mouse is away from ball
-            if(this.power > 1.0){
-              this.power = 1.0;
+            if(this.power > 2.0){
+              this.power = 2.0;
             }
             console.log("POWER:" + this.power)            
             this.angle = changeAngle; //this variable stores the angle gotten from clicking the screen
