@@ -12,7 +12,7 @@ const {
 const {Cube, Axis_Arrows, Textured_Phong, Phong_Shader, Basic_Shader, Subdivision_Sphere} = defs
 const ground_level = -0.9;
 const  backboardX = [-2, 2];
-const  backboardY = [3.9, 5];
+const  backboardY = [3.9, 6];
 const  backboardZ = [-27.49, -26.2];
 const Square =
     class Square extends tiny.Vertex_Buffer {
@@ -164,6 +164,21 @@ export class basketBallScene extends Scene {
         // Mat4.translation(0,6,-27).times(Mat4.scale(1.8,1.2,0.1)
         return (p[0] >= backboardX[0] && p[0] <= backboardX[1]) && (p[1] >= backboardY[0] && p[1] <= backboardY[1]) && (p[2] >= backboardZ[0] && p[2] <= backboardZ[1]);
     }
+    static intersect_rim(p) {
+        // Constants for the cylinder's dimensions and position
+        const centerX = 0, centerY = 3.65, centerZ = -26;
+        const radius = 0.5, height = 0.4;
+        var xzDistance = 0
+        var l2_square = p[0] * p[0] + (p[2] - centerZ) * (p[2] - centerZ);
+        if(l2_square == 0.0) {
+            xzDistance = 0.0;
+        }
+        else{
+            xzDistance = Math.sqrt(l2_square);
+        }
+        var yDistance = Math.abs(p[1] - centerY);
+        return ((xzDistance <= radius && xzDistance >= radius * 0.8) || (xzDistance >= radius && xzDistance <= radius + 0.1 ) )&& yDistance <= height;
+    }
 
 
     texture_buffer_init(gl) {
@@ -296,12 +311,28 @@ export class basketBallScene extends Scene {
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
-            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector);
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.6);
             if (backboardZ[1] - point[2] > 0) // This is the z location
             {
                 position_vector[2] = backboardZ[1] - point[2] + position_vector[2];
             }
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
+        }
+        else if(basketBallScene.intersect_rim(point)){
+            var negated_vec = directional_vector.times(-1);
+            var normal = point.minus(vec3(0,3.65,-26)).normalized();
+            normal = vec3(normal[0], normal[1], normal[2]);
+            console.log(((normal.dot(negated_vec))));
+            directional_vector = (normal.times(2 * (normal.dot(negated_vec)))).minus(negated_vec);
+            const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity / 2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
+            const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
+            const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
+            const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.6);
+            normal = normal.times(0.5).plus(vec3(0,3.65,-26));
+            this.ball_transform = Mat4.identity().times(Mat4.translation(normal[0], normal[1], normal[2]));
+            this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
+
         }
         else{
             const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity/2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
@@ -587,7 +618,7 @@ export class basketBallScene extends Scene {
 
         // The calculation for the thrown ball has changed slightly we now look at the directional vector rather than the angles
         if(!this.ball_thrown) { //only calculates angle when ball is not shot
-          console.log(this.angle)
+          // console.log(this.angle)
           const direction = this.angle;
           this.angle = 1.5708 - this.angle;
           //we will calculate our angle based on where our user clicked
@@ -598,9 +629,8 @@ export class basketBallScene extends Scene {
             zDir = -1.0*zDir
           }
           //for now we will assume a unit vector
-          this.direction_vector = vec3(xDir,10,zDir); // this is the initial directional vector
-          console.log(this.direction_vector);
-          //this.direction_vector = vec3(10,10,0);
+          // this.direction_vector = vec3(xDir,10,zDir); // this is the initial directional vector this.direction_vector = vec3(xDir,10,zDir);
+            this.direction_vector = vec3(2,3,-25);
         }
         //basketball shot at 10 degrees to the right
         if(this.ball_thrown) {
