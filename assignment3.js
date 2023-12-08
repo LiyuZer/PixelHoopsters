@@ -342,7 +342,6 @@ export class basketBallScene extends Scene {
         var point = this.ball_transform.times(vec4(0,0,0,1));
         var wind = this.wind_direction * this.wind_strength
         var directional_vector = this.direction_vector;
-        var floorCount = 0
         // Constants for air resistance
         const rho = 0.003; // Air density (kg/m^3) at sea level
         const Cd = 0.2; // Drag coefficient for a sphere
@@ -363,12 +362,8 @@ export class basketBallScene extends Scene {
                 this.direction_vector = vec3(0,0,0);
             }
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1] + (ground_level - point[1]), position_vector[2] ));
-            floorCount++;
         }
-        if (floorCount > 2)
-        {
-            this.round_setup(model_transform,program_state);
-        }
+       
         else if(basketBallScene.intersect_backBoard(point)) {
             var negated_vec = directional_vector.times(-1);
             directional_vector = (vec3(0, 0, 1).times(2 * (vec3(0, 0, 1).dot(negated_vec)))).minus(negated_vec);
