@@ -61,7 +61,7 @@ export class basketBallScene extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
 
-        this.arrow_angle = 0.0
+        this.arrow_angle = 3.1415;
         this.arrow_transform = Mat4.identity();
         this.ball_transform = Mat4.identity();
         this.arrowColor = hex_color("#90FF90");
@@ -444,9 +444,9 @@ export class basketBallScene extends Scene {
         program_state.draw_shadow = draw_shadow;
 
         if (draw_light_source && shadow_pass) {
-            this.shapes.sphere.draw(context, program_state,
-                Mat4.translation(light_position[0], light_position[1], light_position[2]).times(Mat4.scale(.5,.5,.5)),
-                this.materials.light_src.override({color: light_color}));
+          this.shapes.sphere.draw(context, program_state,
+          Mat4.translation(light_position[0], light_position[1], light_position[2]).times(Mat4.scale(.5,.5,.5)),
+          this.materials.light_src.override({color: light_color}));
         }
 
 
@@ -506,6 +506,29 @@ export class basketBallScene extends Scene {
             this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.lake_texture);
         }
     }
+    change_arrow(){
+      let greenColor = Number("0x90");
+      let redColor = 139;
+      let newColor1 = (this.power * redColor) + ((1-this.power) * greenColor);
+      newColor1 = Math.round(newColor1);
+      newColor1 = newColor1.toString(16);
+      let newColor2 = ((1-this.power) * (greenColor));
+      newColor2 = Math.round(newColor2);
+      console.log(newColor2)
+      newColor2 = newColor2.toString(16);
+      let newColor3 = ((1-this.power) * (Number("0xFF")));
+      newColor3 = Math.round(newColor3);
+      console.log(newColor3);
+      newColor3 = newColor3.toString(16);
+      if(newColor2.length == 1){
+          newColor2 = "0" + newColor2
+        }
+      if(newColor3.length == 1){
+          newColor3 = "0" + newColor3
+        }
+      this.arrowColor = hex_color("#" + newColor1 + newColor3 + newColor2); 
+      console.log("#" + newColor1.toString(16) + newColor3.toString(16) + newColor2.toString(16))
+    }
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
         this.live_string(box => box.textContent = "- Wind Strength: " + this.wind_strength.toFixed(2)) 
@@ -522,8 +545,8 @@ export class basketBallScene extends Scene {
 
         this.key_triggered_button("up", ["w"], ()=>{this.direction_vector.times(Mat4.rotation(0.01,1,0,0))});
         this.key_triggered_button("down", ["s"], ()=>{this.direction_vector.times(Mat4.rotation(-0.01,1,0,0))});
-        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.0001; this.update_angle = true;});
-        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.0001; this.update_angle = true;});
+        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.1;this.arrow_angle+=0.1; this.change_arrow();});
+        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.0001;this.arrow_angle-=0.1; this.change_arrow();});
         if(this.camerapov){
           this.key_triggered_button("Increase Vertical Angle",["w"],()=>{
             //this.direction_vector[2] += this.direction_vector;
@@ -531,7 +554,6 @@ export class basketBallScene extends Scene {
         }
     }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
-  
     
     display(context, program_state) {
         const t = program_state.animation_time;
@@ -552,7 +574,7 @@ export class basketBallScene extends Scene {
 
         if (!context.scratchpad.controls) { //only once per instance of our game
           context.scratchpad.controls = 1;
-          this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
+          //this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
           // Define the global camera and projection matrices, which are stored in program_state.
           let LookAt = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
           program_state.set_camera(LookAt);  
@@ -593,6 +615,7 @@ export class basketBallScene extends Scene {
             }//how much our angle was changed by our user clicking on screen
             //initially basketball is facing where camera is pointing (this is pre-merge info)
             console.log("changeAngle: "+changeAngle);
+            
             const distance = Math.sqrt((changeInX**2)+(changeInY**2));
             console.log("A"+distance);
             this.power = distance * 0.714; //calculate power based on distance mouse is away from ball
@@ -602,7 +625,11 @@ export class basketBallScene extends Scene {
             }
             console.log("POWER:" + this.power)            
             this.angle = changeAngle; //this variable stores the angle gotten from clicking the screen
+            this.arrow_angle = this.angle * -1.0 + Math.PI;
+            console.log(this.arrow_angle)
+            this.angle = 1.5708 - this.angle;
             this.update_angle = true;
+            this.change_arrow();
           })
 
         }
@@ -670,6 +697,7 @@ export class basketBallScene extends Scene {
 
 
         // The calculation for the thrown ball has changed slightly we now look at the directional vector rather than the angles
+        /*
         if(!this.ball_thrown && this.update_angle) { //only calculates angle when ball is not shot
           this.update_angle = false;
           console.log("ANGLE");
@@ -685,35 +713,24 @@ export class basketBallScene extends Scene {
             zDir = -1.0*zDir
           }
           //90FF90 is 0 power
-          let greenColor = Number("0x90");
-          let redColor = 139;
-          let newColor1 = (this.power * redColor) + ((1-this.power) * greenColor);
-          newColor1 = Math.round(newColor1);
-          newColor1 = newColor1.toString(16);
-          let newColor2 = ((1-this.power) * (greenColor));
-          newColor2 = Math.round(newColor2);
-          console.log(newColor2)
-          newColor2 = newColor2.toString(16);
-          let newColor3 = ((1-this.power) * (Number("0xFF")));
-          newColor3 = Math.round(newColor3);
-          console.log(newColor3);
-          newColor3 = newColor3.toString(16);
-          if(newColor2.length == 1){
-            newColor2 = "0" + newColor2
-          }
-          if(newColor3.length == 1){
-            newColor3 = "0" + newColor3
-          }
-          this.arrowColor = hex_color("#" + newColor1 + newColor3 + newColor2); 
-          console.log("#" + newColor1.toString(16) + newColor3.toString(16) + newColor2.toString(16))
+          
           //for now we will assume a unit vector
           this.direction_vector = vec3(xDir,6,zDir); // this is the initial directional vector
           //this.arrow_transform = this.arrow_transform.times(Mat4.translation(0,0,-0.433015))
           //.times(Mat4.rotation(this.angle,0,1,0)).times(Mat4.translation(0,0,0.433015));
           //this.direction_vector = vec3(10,10,0);
         }
+        */
         //basketball shot at 10 degrees to the right
         if(this.ball_thrown) {
+          //calculate our direction vector based on changes in angle and current power
+          const maxVelocity = this.power * 30.0;
+          let xDir = maxVelocity * Math.cos(this.angle);
+          let zDir = maxVelocity * Math.sin(this.angle);
+          if(zDir > 0){
+            zDir = -1.0*zDir
+          }
+          this.direction_vector = vec3(xDir,6,zDir);
           if(this.direction_vector == vec3(0,0,0)){ //in case our direction vector has no magnitude
             this.direction_vector == vec3(1,1,1); 
           }
