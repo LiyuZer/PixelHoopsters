@@ -212,6 +212,9 @@ export class basketBallScene extends Scene {
         var yDistance = Math.abs(p[1] - centerY);
         return ((xzDistance <= radius && xzDistance >= radius * 0.8) || (xzDistance >= radius && xzDistance <= radius + 0.1 ) )&& yDistance <= height;
     }
+    static intersect_stand(p){
+        return p[0] <= 0.4 && p [0] >= 0 && p[1] >= -1.5 &&  p[1] <= 3.8 && p[2] >= -28 && p[2] <= -30;
+    }
     static checkForScore(p)
     {
        const hoopX = 0;
@@ -357,10 +360,6 @@ export class basketBallScene extends Scene {
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
             this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.6);
-            console.log(velocityMagnitude);
-            if(velocityMagnitude < 1){
-                this.direction_vector = vec3(0,0,0);
-            }
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1] + (ground_level - point[1]), position_vector[2] ));
         }
        
@@ -382,7 +381,6 @@ export class basketBallScene extends Scene {
             var negated_vec = directional_vector.times(-1);
             var normal = point.minus(vec3(0,3.65,-26)).normalized();
             normal = vec3(normal[0], normal[1], normal[2]);
-            console.log(((normal.dot(negated_vec))));
             directional_vector = (normal.times(2 * (normal.dot(negated_vec)))).minus(negated_vec);
             const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity / 2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
@@ -393,6 +391,16 @@ export class basketBallScene extends Scene {
             this.ball_transform = Mat4.identity().times(Mat4.translation(normal[0], normal[1], normal[2]));
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
 
+        }
+        else if(basketBallScene.intersect_stand(point)){
+            var negated_vec = directional_vector.times(-1);
+            directional_vector = (vec3(0,1,0).times(2 * (vec3(0,1,0).dot(negated_vec)))).minus(negated_vec);
+            const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity/2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
+            const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
+            const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
+            const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.6);
+            this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2] ));
         }
         else{
             if (basketBallScene.checkForScore(point)){
@@ -405,6 +413,7 @@ export class basketBallScene extends Scene {
             this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector);
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
         }
+
     }
 
 
@@ -509,7 +518,6 @@ export class basketBallScene extends Scene {
         let pole_transform = model_transform.times(Mat4.translation(0,3,-29))
             .times(Mat4.scale(0.40,3,0.4));
         this.shapes.cube.draw(context,program_state,pole_transform, shadow_pass ? this.materials.phong : this.materials.pure);
-
         let support_transform = model_transform.times(Mat4.translation(0,5.6,-28)).times(Mat4.scale(0.4,0.4,1));
         this.shapes.cube.draw(context,program_state,support_transform, shadow_pass ? this.materials.phong : this.materials.pure);
 
