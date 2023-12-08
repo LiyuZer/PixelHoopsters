@@ -382,6 +382,8 @@ export class basketBallScene extends Scene {
     }
     round_setup(model_transform,program_state){
       this.ball_thrown = false;
+      let xScalar = 1.0;
+      let yScalar = 1.0;
       let randomX = 0.0;
       let randomZ = 0.0;
       if(Math.random()<0.5){
@@ -535,8 +537,8 @@ export class basketBallScene extends Scene {
         }
         
         if (!context.scratchpad.controls) { //only once per instance of our game
-          //context.scratchpad.controls = 1;
-          this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
+          context.scratchpad.controls = 1;
+          //this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
           // Define the global camera and projection matrices, which are stored in program_state.
           let LookAt = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
           program_state.set_camera(LookAt);  
@@ -579,9 +581,10 @@ export class basketBallScene extends Scene {
             console.log("changeAngle: "+changeAngle);
             const distance = Math.sqrt((changeInX**2)+(changeInY**2));
             console.log("A"+distance);
-            this.power = distance * 1.428; //calculate power based on distance mouse is away from ball
-            if(this.power > 2.0){
-              this.power = 2.0;
+            this.power = distance * 0.714; //calculate power based on distance mouse is away from ball
+            //please keep power between 0 and 1(if you want to change balancing of power, just change line above)
+            if(this.power > 1.0){
+              this.power = 1.0;
             }
             console.log("POWER:" + this.power)            
             this.angle = changeAngle; //this variable stores the angle gotten from clicking the screen
@@ -671,11 +674,13 @@ export class basketBallScene extends Scene {
           let newColor1 = (this.power * redColor) + ((1-this.power) * greenColor);
           newColor1 = Math.round(newColor1);
           newColor1 = newColor1.toString(16);
-          let newColor2 = ((1-this.power) * greenColor);
+          let newColor2 = ((1-this.power) * (greenColor));
           newColor2 = Math.round(newColor2);
+          console.log(newColor2)
           newColor2 = newColor2.toString(16);
-          let newColor3 = ((1-this.power) * Number("0xFF"));
+          let newColor3 = ((1-this.power) * (Number("0xFF")));
           newColor3 = Math.round(newColor3);
+          console.log(newColor3);
           newColor3 = newColor3.toString(16);
           if(newColor2.length == 1){
             newColor2 = "0" + newColor2
