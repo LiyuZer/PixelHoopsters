@@ -404,7 +404,7 @@ export class basketBallScene extends Scene {
       const angle = Math.atan(Math.abs((-11.7 - randomZ)/randomX)); //angle that the ball is facing the hoop
       if(randomX < 0.0){
         const LookAt = Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 0.75, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
-        program_state.set_camera(LookAt);
+        //program_state.set_camera(LookAt);
         this.ballPOV = LookAt;
         //this.cameraPosition = model_transform.times(Mat4.translation(randomX+2.0*Math.cos(angle), -0.5, randomZ-2.0*Math.sin(angle)))
         //.times(Mat4.translation(-1,-1,0)).times(Mat4.scale(0.8,1,0.8)).times(Mat4.translation(1,1,0));
@@ -418,7 +418,9 @@ export class basketBallScene extends Scene {
         //console.log(Mat4.look_at(vec3(randomX - 4*Math.cos(angle), 1, randomZ + 4*Math.sin(angle)), vec3(0,2.6,-15.7), vec3(0, 1.0, 0)))
       }
       else{
-        program_state.set_camera(Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
+        const LookAt = Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
+        program_state.set_camera(LookAt);
+        this.ballPOV = LookAt
         const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
         const arrowLocation = Mat4.look_at(vec3(randomX - 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
@@ -429,7 +431,6 @@ export class basketBallScene extends Scene {
       this.angle = 0.0;
       //program_state.set_camera(Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
     }
-
     create_court(context,program_state,model_transform, shadow_pass, draw_light_source=false, draw_shadow=false){
         //create the court ground
         //current model_transform is uniform and cube we are using is a unit cube
@@ -517,6 +518,11 @@ export class basketBallScene extends Scene {
         this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true});
         this.key_triggered_button("change POV", ["p"],() => {this.camerapov = !this.camerapov});
         this.key_triggered_button("New Round!", ["n"], ()=>{this.newRound = true});
+        if(this.camerapov){
+          this.key_triggered_button("Increase Vertical Angle",["w"],()=>{
+            //this.direction_vector[2] += this.direction_vector;
+          })
+        }
       }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
   
@@ -540,7 +546,7 @@ export class basketBallScene extends Scene {
 
         if (!context.scratchpad.controls) { //only once per instance of our game
           context.scratchpad.controls = 1;
-          //this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
+          this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
           // Define the global camera and projection matrices, which are stored in program_state.
           let LookAt = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
           program_state.set_camera(LookAt);  
