@@ -163,7 +163,7 @@ export class basketBallScene extends Scene {
         this.current_direction  = vec3(0,0,0); // The direction we are looking at
         this.angle = 0.0;
         this.power = 0.0;
-
+        this.newRound = true;
 
         /* DEMO CODE*/
 
@@ -377,12 +377,10 @@ export class basketBallScene extends Scene {
         // existing court creation code...
     
     }
-    round_setup(model_transform,program_state,context){
+    round_setup(model_transform,program_state){
       this.ball_thrown = false;
       let randomX = 0.0;
       let randomZ = 0.0;
-      let xScalar = 1.0;
-      let yScalar = 1.0;
       if(Math.random()<0.5){
         xScalar = -1.0;
       }
@@ -418,6 +416,7 @@ export class basketBallScene extends Scene {
         this.ball_transform = Mat4.inverse(ballLocation);
         this.arrow_transform = Mat4.inverse(arrowLocation)
       }
+      console.log("restart")
       this.direction_vector = vec3(0,0,0);
       this.angle = 0.0;
       //program_state.set_camera(Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
@@ -460,7 +459,7 @@ export class basketBallScene extends Scene {
         this.shapes.cube.draw(context,program_state,back_board_transform,shadow_pass ? this.materials.backboard_texture : this.materials.pure);
         // let rim_transform = model_transform.times(Mat4.translation(0,5.0,-26).times(Mat4.scale(1,0.25,1).times(Mat4.rotation(3.14/2,1,0,0))));
         let rim_transform1 = model_transform.times(Mat4.translation(0,5.0,-26).times(Mat4.scale(1.4,2,1.4).times(Mat4.rotation(3.14/2,1,0,0))));
-
+        
         this.shapes.torus.draw(context,program_state,rim_transform1, shadow_pass ? this.materials.rim_texture: this.materials.pure);
         // this.shapes.cylinder.draw(context,program_state,rim_transform, shadow_pass ? this.materials.rim_texture: this.materials.pure);
 
@@ -513,7 +512,7 @@ export class basketBallScene extends Scene {
         this.dt = program_state.animation_delta_time / 1000;
         const gl = context.context;
         let model_transform = Mat4.identity();
-
+        
         if (!this.init_ok) {
             const ext = gl.getExtension('WEBGL_depth_texture');
             if (!ext) {
@@ -523,7 +522,7 @@ export class basketBallScene extends Scene {
 
             this.init_ok = true;
         }
-
+        
         if (!context.scratchpad.controls) { //only once per instance of our game
           context.scratchpad.controls = 1;
           this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
@@ -586,7 +585,7 @@ export class basketBallScene extends Scene {
           )); // Locate the camera here
         }
 
-
+        
         // The position of the light
         this.light_position = Mat4.rotation(1500, 0, 1, 0).times(vec4(3, 25, 0, 1));
         // The color of the light
@@ -623,7 +622,9 @@ export class basketBallScene extends Scene {
         program_state.projection_transform = light_proj_mat;
         this.create_court(context,program_state,model_transform, false, false, false);
 
-
+        if (this.newRound){
+          this.round_setup(model_transform,program_state);
+        }
 
 
 
@@ -637,10 +638,7 @@ export class basketBallScene extends Scene {
 
 
         //randomize our basketball position (currently commented out to test basketball shooting)
-        if (this.newRound){
-          this.round_setup(model_transform,program_state);
-          
-        }
+        
 
 
         // The calculation for the thrown ball has changed slightly we now look at the directional vector rather than the angles
@@ -669,11 +667,11 @@ export class basketBallScene extends Scene {
           let newColor3 = ((1-this.power) * Number("0xFF"));
           newColor3 = Math.round(newColor3);
           newColor3 = newColor3.toString(16);
-          if(newColor2 == "0"){
-            newColor2 = "00"
+          if(newColor2.length == 1){
+            newColor2 = "0" + newColor2
           }
-          if(newColor3 == "0"){
-            newColor3 = "00";
+          if(newColor3.length == 1){
+            newColor3 = "0" + newColor3
           }
           this.arrowColor = hex_color("#" + newColor1 + newColor3 + newColor2); 
           console.log("#" + newColor1.toString(16) + newColor3.toString(16) + newColor2.toString(16))
@@ -689,7 +687,7 @@ export class basketBallScene extends Scene {
             this.direction_vector == vec3(1,10,1); 
           }
           this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
-          program_state.set_camera(Mat4.inverse(this.ball_transform).times(Mat4.translation(0,0,-5)));
+          program_state.set_camera(Mat4.inverse(this.ball_transform).times(Mat4.translation(0,2,-5)));
         }
 
         //this.create_court(context,program_state,model_transform);
