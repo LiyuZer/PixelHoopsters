@@ -463,6 +463,16 @@ export class basketBallScene extends Scene {
       this.angle = 0.0;
       //program_state.set_camera(Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
     }
+    update_hori_angle(){
+      this.direction_vector = vec3(0,2,-6);
+      const maxVelocity = this.power * 30.0;
+      let xDir = maxVelocity * Math.cos(this.angle);
+      let zDir = maxVelocity * Math.sin(this.angle);
+      if(zDir > 0){
+      zDir = -1.0*zDir
+      }
+      this.direction_vector = vec3(xDir,6,zDir);
+    }
     create_court(context,program_state,model_transform, shadow_pass, draw_light_source=false, draw_shadow=false){
         //create the court ground
         //current model_transform is uniform and cube we are using is a unit cube
@@ -579,15 +589,15 @@ export class basketBallScene extends Scene {
         this.live_string(box => box.textContent = "- Wind Direction left/right: " + this.wind_direction[1].toFixed(2))
         this.new_line();
         this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
-        this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true;this.direction_vector=vec3(0,6,-6)});
+        this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true;});
         this.key_triggered_button("change POV", ["p"],() => {this.camerapov = !this.camerapov});
         this.key_triggered_button("New Round!", ["n"], ()=>{this.newRound = true});
 
 
         this.key_triggered_button("up", ["w"], ()=>{this.direction_vector.times(Mat4.rotation(0.01,1,0,0))});
         this.key_triggered_button("down", ["s"], ()=>{this.direction_vector.times(Mat4.rotation(-0.01,1,0,0))});
-        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.1;this.arrow_angle+=0.1; this.change_arrow();});
-        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.0001;this.arrow_angle-=0.1; this.change_arrow();});
+        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.1;this.update_hori_angle();this.arrow_angle+=0.1; this.change_arrow();});
+        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.0001;this.update_hori_angle();this.arrow_angle-=0.1; this.change_arrow();});
     }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
     
@@ -666,6 +676,7 @@ export class basketBallScene extends Scene {
             this.angle = 1.5708 - this.angle;
             this.update_angle = true;
             this.change_arrow();
+            this.update_hori_angle();
           })
 
         }
@@ -769,14 +780,8 @@ export class basketBallScene extends Scene {
             maxcamheight = 20;
           }
           if(false){
-            this.direction_vector = vec3(0,2,-6);
-            const maxVelocity = this.power * 30.0;
-            let xDir = maxVelocity * Math.cos(this.angle);
-            let zDir = maxVelocity * Math.sin(this.angle);
-            if(zDir > 0){
-              zDir = -1.0*zDir
-            }
-            this.direction_vector = vec3(xDir,6,zDir);
+            
+            
             //this.direction_vector = new Mat4([this.direction_vector[0]],[this.direction_vector[1]],[this.direction_vector[2]],[1])
             console.log(this.direction_vector);
             //this.direction_vector = Mat4.rotation(3,1,0,0).times(this.direction_vector);
