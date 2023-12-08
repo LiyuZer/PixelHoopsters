@@ -419,6 +419,7 @@ export class basketBallScene extends Scene {
       }
       else{
         program_state.set_camera(Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
+        this.ballPOV = Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
         const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
         const arrowLocation = Mat4.look_at(vec3(randomX - 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
