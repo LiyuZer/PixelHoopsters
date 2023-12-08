@@ -91,14 +91,11 @@ export class basketBallScene extends Scene {
         this.hoop_location = Mat4.identity().times(Mat4.translation(0,5.6,-11.7).times(Mat4.scale(1,0.4,1).times(Mat4.rotation(3.14/2,1,0,0))));
         this.materials = {
             phong: new Material(new Textured_Phong(), {
-                color: hex_color("#CD5C5C"),
-            }),
+              ambient: 0.5, diffusivity: 0, specularity: 0.1,
+              color: hex_color("#20150f"),
+          }),
             arrow: new Material(new Phong_Shader(),{
               color: hex_color("#90FF90"), ambient: 1, diffusivity:1,
-            }),
-            texture: new Material(new Textured_Phong(), {
-                ambient: 0.8, diffusivity: 0, specularity: 0.1,
-                texture: new Texture("assets/b_texture.png"),
             }),
             ball_texture: new Material(new Shadow_Textured_Phong_Shader(1), {
                 color: color(.5, .5, .5, 1),
@@ -112,22 +109,17 @@ export class basketBallScene extends Scene {
                 light_depth_texture: null
             }),
             backboard_texture: new Material(new Shadow_Textured_Phong_Shader(1), {
-                ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
+                ambient: 0.8, diffusivity: 0.5, specularity: 0.5,
                 color_texture: new Texture("assets/Backboard.png"),
                 light_depth_texture: null
             }),
             rim_texture: new Material(new Shadow_Textured_Phong_Shader(1), {
-                ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
+                ambient: 0.8, diffusivity: 0.5, specularity: 0.5,
                 color: hex_color("#FF5F15"),
                 light_depth_texture: null
             }),
             rim_texture1: new Material(new Textured_Phong(), {
                 color: hex_color("000000"),
-            }),
-            wall_texture: new Material(new Textured_Phong(), {
-                color: hex_color("#C0C0C0"),
-                ambient: 0.8, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/wall.png")
             }),
             indoor_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
@@ -164,6 +156,7 @@ export class basketBallScene extends Scene {
         this.camerapov = true;
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 0), vec3(0,5.6,-11.7), vec3(0, 10, 0));
         this.environments = 0;
+        this.color =  hex_color("#FFFFFF");
         this.init_ok = false;
         this.direction_vector = vec3(0,3,-10);
         this.ball_thrown = false;
@@ -455,15 +448,15 @@ export class basketBallScene extends Scene {
       this.newRound = false;
       
       //set our camera to ball's new location (work in progress as camera does not align perfectly yet)
-      const angle = Math.atan(Math.abs((-11.7 - randomZ)/randomX)); //angle that the ball is facing the hoop
+      const angle = Math.atan(Math.abs((-29.0 - randomZ)/randomX)); //angle that the ball is facing the hoop
       if(randomX < 0.0){
-          const LookAt = Mat4.look_at(vec3(randomX, 1.5, randomZ + 5), vec3(0, 1.5, -29), vec3(0, 1.0, 0));
+        const LookAt = Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0, 1.5, -29), vec3(0, 1.0, 0));
         //program_state.set_camera(LookAt);
         this.ballPOV = LookAt;
         //this.cameraPosition = model_transform.times(Mat4.translation(randomX+2.0*Math.cos(angle), -0.5, randomZ-2.0*Math.sin(angle)))
         //.times(Mat4.translation(-1,-1,0)).times(Mat4.scale(0.8,1,0.8)).times(Mat4.translation(1,1,0));
-        const ballLocation = Mat4.look_at(vec3(randomX, 0, randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0))
-        const arrowLocation = Mat4.look_at(vec3(randomX, 0, randomZ), vec3(0,2.6,-11.7), vec3(0, 1, 0));
+        const ballLocation = Mat4.look_at(vec3(randomX, 0, randomZ), vec3(0,2.6,-29.0), vec3(0, 1.0, 0))
+        const arrowLocation = Mat4.look_at(vec3(randomX + 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-29), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
         this.arrow_transform = Mat4.inverse(arrowLocation);
         this.wind_strength = Math.random();
@@ -472,12 +465,12 @@ export class basketBallScene extends Scene {
         //console.log(Mat4.look_at(vec3(randomX - 4*Math.cos(angle), 1, randomZ + 4*Math.sin(angle)), vec3(0,2.6,-15.7), vec3(0, 1.0, 0)))
       }
       else{
-          const LookAt = Mat4.look_at(vec3(randomX, 1.5, randomZ + 5), vec3(0, 1.5, -29), vec3(0, 1.0, 0));
-        program_state.set_camera(LookAt);
-        this.ballPOV = LookAt
-        const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
-        const arrowLocation = Mat4.look_at(vec3(randomX , 0, randomZ ), vec3(0,2.6,-11.7), vec3(0, 1, 0));
+        this.ballPOV = Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-29), vec3(0, 1, 0));
+        program_state.set_camera(this.ballPOV);
+        const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-29.0), vec3(0, 1.0, 0));
+        const arrowLocation = Mat4.look_at(vec3(randomX - 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-29), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
+        this.arrow_transform = Mat4.inverse(arrowLocation)
         this.wind_strength = Math.random();
         this.wind_direction = vec3(Math.random(), Math.random(), Math.random())
         this.arrow_transform = Mat4.inverse(arrowLocation);
@@ -523,11 +516,13 @@ export class basketBallScene extends Scene {
 
         program_state.draw_shadow = draw_shadow;
 
-        if (draw_light_source && shadow_pass) {
+        // DRAW LIGHT SOURCE FOR REFERENCE
+
+        /*if (draw_light_source && shadow_pass) {
           this.shapes.sphere.draw(context, program_state,
           Mat4.translation(light_position[0], light_position[1], light_position[2]).times(Mat4.scale(.5,.5,.5)),
           this.materials.light_src.override({color: light_color}));
-        }
+        }*/
 
 
         model_transform = model_transform.times(Mat4.translation(0,-1.5,0));
@@ -576,17 +571,20 @@ export class basketBallScene extends Scene {
         // let back_transform = model_transform.times(Mat4.translation(0,8,30)).times(Mat4.scale(17,8,0.1));
         // this.shapes.cube.draw(context, program_state, back_transform, this.materials.wall_texture);
         if (this.environments == 0){
-            let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.rotation(1.4,0,1,0)).times(Mat4.scale(60,60,60));
-            this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.indoor_texture);
-        }
-        else if(this.environments == 1){
-            let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.scale(60,60,60));
-            this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.outdoor_texture);
-        }
-        else{
-            let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.scale(60,60,60));
-            this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.lake_texture);
-        }
+          let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.rotation(1.4,0,1,0)).times(Mat4.scale(60,60,60));
+          this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.indoor_texture);
+          this.color = hex_color("#FFFFFF");
+      }
+      else if(this.environments == 1){
+          let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.scale(60,60,60));
+          this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.outdoor_texture);
+          this.color = hex_color("#FDB813");
+      }
+      else{
+          let sphere_transfrom = model_transform.times(Mat4.translation(0,10,0)).times(Mat4.scale(60,60,60));
+          this.shapes.sphere_enclosing.draw(context, program_state, sphere_transfrom, this.materials.lake_texture);
+          this.color = hex_color("#909D9E");
+      }
     }
     change_arrow(){
       let greenColor = Number("0x90");
@@ -747,14 +745,9 @@ export class basketBallScene extends Scene {
 
         
         // The position of the light
-        this.light_position = Mat4.rotation(1500, 0, 1, 0).times(vec4(3, 25, 0, 1));
+        this.light_position = Mat4.rotation(0, 0, 1, 0).times(vec4(1,15, -5, 1));
         // The color of the light
-        this.light_color = color(
-            0.667 + Math.sin(t/500) / 3,
-            0.667 + Math.sin(t/1500) / 3,
-            0.667 + Math.sin(t/3500) / 3,
-            1
-        );
+        this.light_color = this.color;
 
         // This is a rough target of the light.
         // Although the light is point light, we need a target to set the POV of the light
@@ -767,7 +760,7 @@ export class basketBallScene extends Scene {
         const light_view_mat = Mat4.look_at(
             vec3(this.light_position[0], this.light_position[1], this.light_position[2]),
             vec3(this.light_view_target[0], this.light_view_target[1], this.light_view_target[2]),
-            vec3(0, 1, 0), // assume the light to target will have a up dir of +y, maybe need to change according to your case
+            vec3(1, 1, 0), // assume the light to target will have a up dir of +y, maybe need to change according to your case
         );
         const light_proj_mat = Mat4.perspective(this.light_field_of_view, 1, 0.5, 500);
         // Bind the Depth Texture Buffer
