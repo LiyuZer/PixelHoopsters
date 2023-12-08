@@ -1,6 +1,6 @@
 import {defs, tiny} from './examples/common.js';
 import {Shape_From_File} from './examples/obj-file-demo.js'
-import {Text_Demo, Text_Line} from './examples/text-demo.js'
+
 
 import {Color_Phong_Shader, Shadow_Textured_Phong_Shader,
     Depth_Texture_Shader_2D, Buffered_Texture, LIGHT_DEPTH_TEX_SIZE} from './examples/shadow-demo-shaders.js'
@@ -62,10 +62,10 @@ export class basketBallScene extends Scene {
         super();
         
         this.arrow_angle = 3.1415;
-        this.verticalAngle = 0.0;
         this.arrow_transform = Mat4.identity();
         this.ball_transform = Mat4.identity();
         this.arrowColor = hex_color("#90FF90");
+        this.vertVelocity = 10.61; //temp variable for projectile motion will delete in actual implementation
         this.wind_strength = Math.random();
         this.wind_direction = vec3(Math.random(), Math.random(), Math.random())
         this.score = 0;
@@ -81,7 +81,6 @@ export class basketBallScene extends Scene {
             square_2d: new Square(),
             triangle: new Triangle(),
             cone: new defs.Closed_Cone(50,50),
-            text: new Text_Line(10),
             //stands: new defs.Subdivision_Sphere(5), // adjust parameters as needed
             //roof: new defs.Cube(),
             //scorer: new defs.Cube(),
@@ -153,16 +152,9 @@ export class basketBallScene extends Scene {
                 light_depth_texture: null
     
             }),
-            text_image: new Material(new Textured_Phong(1), {
-              ambient: 1, diffusivity: 1, specularity: 0,
-              texture: new Texture("assets/text.png")
-            }),
             pure : new Material(new Color_Phong_Shader(), {
             }),
-            grey : new Material(new Phong_Shader(), {
-              color: color(.5, .5, .5, 1), ambient: 0,
-              diffusivity: .3, specularity: .5, smoothness: 10
-          }),
+
     
 
         }
@@ -411,7 +403,7 @@ export class basketBallScene extends Scene {
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
-            this.direction_vector = vec3(directional_vector[0] - wind[0], directional_vector[1] - wind[1] - gravity * deltaTime, directional_vector[2] - wind[2]).plus(dragForceVector);
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector);
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
         }
     }
@@ -462,8 +454,9 @@ export class basketBallScene extends Scene {
         //console.log(Mat4.look_at(vec3(randomX - 4*Math.cos(angle), 1, randomZ + 4*Math.sin(angle)), vec3(0,2.6,-15.7), vec3(0, 1.0, 0)))
       }
       else{
-        this.ballPOV = Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
-        program_state.set_camera(this.ballPOV);
+        const LookAt = Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
+        program_state.set_camera(LookAt);
+        this.ballPOV = LookAt
         const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
         const arrowLocation = Mat4.look_at(vec3(randomX - 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
@@ -473,16 +466,6 @@ export class basketBallScene extends Scene {
       this.direction_vector = vec3(0,0,0);
       this.angle = 0.0;
       //program_state.set_camera(Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
-    }
-    update_hori_angle(){
-      this.direction_vector = vec3(0,2,-6);
-      const maxVelocity = this.power * 30.0;
-      let xDir = maxVelocity * Math.cos(this.angle);
-      let zDir = maxVelocity * Math.sin(this.angle);
-      if(zDir > 0){
-      zDir = -1.0*zDir
-      }
-      this.direction_vector = vec3(xDir,6,zDir);
     }
     create_court(context,program_state,model_transform, shadow_pass, draw_light_source=false, draw_shadow=false){
         //create the court ground
@@ -502,13 +485,10 @@ export class basketBallScene extends Scene {
           this.materials.light_src.override({color: light_color}));
         }
 
-        
 
         model_transform = model_transform.times(Mat4.translation(0,-1.5,0));
         let court_transform = model_transform.times(Mat4.scale(17,0.1,30));
 
-        // Draw the cube
-        let scoreboard_transform = model_transform.times(Mat4.translation(0,10,-30)).times(Mat4.scale(3,2,0.5));
 
         this.shapes.cube.draw(context,program_state, court_transform, shadow_pass ? this.materials.court_texture : this.materials.pure);
 
@@ -530,12 +510,8 @@ export class basketBallScene extends Scene {
 
 
         this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), shadow_pass ? this.materials.ball_texture : this.materials.pure);
-        
-        //draw scoreboard
-        this.shapes.cube.draw(context, program_state, scoreboard_transform, this.materials.grey);
 
-       
-        
+
         // // left side
         // let left_transform = model_transform.times(Mat4.translation(-17,8,0)).times(Mat4.scale(0.1,8,30));
         // this.shapes.cube.draw(context, program_state, left_transform, this.materials.wall_texture);
@@ -600,15 +576,20 @@ export class basketBallScene extends Scene {
         this.live_string(box => box.textContent = "- Wind Direction left/right: " + this.wind_direction[1].toFixed(2))
         this.new_line();
         this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
-        this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true;});
+        this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true});
         this.key_triggered_button("change POV", ["p"],() => {this.camerapov = !this.camerapov});
         this.key_triggered_button("New Round!", ["n"], ()=>{this.newRound = true});
 
 
         this.key_triggered_button("up", ["w"], ()=>{this.direction_vector.times(Mat4.rotation(0.01,1,0,0))});
         this.key_triggered_button("down", ["s"], ()=>{this.direction_vector.times(Mat4.rotation(-0.01,1,0,0))});
-        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.1;this.update_hori_angle();this.arrow_angle+=0.1; this.change_arrow();});
-        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.0001;this.update_hori_angle();this.arrow_angle-=0.1; this.change_arrow();});
+        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.1;this.arrow_angle+=0.1; this.change_arrow();});
+        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.0001;this.arrow_angle-=0.1; this.change_arrow();});
+        if(this.camerapov){
+          this.key_triggered_button("Increase Vertical Angle",["w"],()=>{
+            //this.direction_vector[2] += this.direction_vector;
+          })
+        }
     }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
     
@@ -630,8 +611,8 @@ export class basketBallScene extends Scene {
         }
 
         if (!context.scratchpad.controls) { //only once per instance of our game
-          //context.scratchpad.controls = 1;
-          this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
+          context.scratchpad.controls = 1;
+          //this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
           // Define the global camera and projection matrices, which are stored in program_state.
           let LookAt = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
           program_state.set_camera(LookAt);  
@@ -687,11 +668,11 @@ export class basketBallScene extends Scene {
             this.angle = 1.5708 - this.angle;
             this.update_angle = true;
             this.change_arrow();
-            this.update_hori_angle();
           })
 
         }
-      
+
+        
         // The position of the light
         this.light_position = Mat4.rotation(1500, 0, 1, 0).times(vec4(3, 25, 0, 1));
         // The color of the light
@@ -740,12 +721,14 @@ export class basketBallScene extends Scene {
           program_state.set_camera(this.ballPOV);
         }
 
+
         // Step 2: unbind, draw to the canvas
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         program_state.view_mat = program_state.camera_inverse;
         program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 0.5, 500);
         this.create_court(context,program_state,model_transform, true, true, true);
+
 
 
         //randomize our basketball position (currently commented out to test basketball shooting)
@@ -780,24 +763,20 @@ export class basketBallScene extends Scene {
         //basketball shot at 10 degrees to the right
         if(this.ball_thrown) {
           //calculate our direction vector based on changes in angle and current power
-          
+          const maxVelocity = this.power * 30.0;
+          let xDir = maxVelocity * Math.cos(this.angle);
+          let zDir = maxVelocity * Math.sin(this.angle);
+          if(zDir > 0){
+            zDir = -1.0*zDir
+          }
+          this.direction_vector = vec3(xDir,6,zDir);
           if(this.direction_vector == vec3(0,0,0)){ //in case our direction vector has no magnitude
             this.direction_vector == vec3(1,1,1); 
           }
-          
-          //this.direction_vector = vec3(this.direction_vector[0][0],this.direction_vector[1,0],this.direction_vector[2,0])
           this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
           let maxcamheight = t/100;
           if (maxcamheight > 20){
             maxcamheight = 20;
-          }
-          if(false){
-            
-            
-            //this.direction_vector = new Mat4([this.direction_vector[0]],[this.direction_vector[1]],[this.direction_vector[2]],[1])
-            console.log(this.direction_vector);
-            //this.direction_vector = Mat4.rotation(3,1,0,0).times(this.direction_vector);
-            console.log(this.direction_vector);
           }
           //Optional stationary camera angle that can replace the ball POV
           program_state.set_camera(Mat4.identity().times(Mat4.translation(0,-5,-40)).times(Mat4.rotation(1.3,0,1,0)));
@@ -810,22 +789,7 @@ export class basketBallScene extends Scene {
         .times(Mat4.rotation(this.arrow_angle,0,1,0)).times(Mat4.translation(0,0,0.433015)).times(Mat4.scale(0.1,0.1,0.25))
         ,this.materials.arrow.override({color:this.arrowColor}));
         //this.create_stadium(context, program_state, model_transform);
-
-        //SCOREBOARD TEXT
-         // Text settings
-         let text_string = this.score.toString();
-         this.shapes.text.set_string(text_string, context.context);
-                 
-         let textshiftlength = text_string.length == 1 ? 0:-0.4;
-         // Calculate the transformation for the text
-         let text_transform = Mat4.identity().times(Mat4.translation(0,8.5,-30)).times(Mat4.scale(3,2,0.5))
-             .times(Mat4.translation(textshiftlength, 0, 1.01)) // Adjust these values to position the text
-             .times(Mat4.scale(0.5, .5, .5));   // Adjust the scale to fit the text on the cube face
-             
-         // Draw the text
-         this.shapes.text.draw(context, program_state, text_transform, this.materials.text_image);
-
-      }
+        }
         
 }
 
