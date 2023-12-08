@@ -441,15 +441,15 @@ export class basketBallScene extends Scene {
       this.newRound = false;
       
       //set our camera to ball's new location (work in progress as camera does not align perfectly yet)
-      const angle = Math.atan(Math.abs((-11.7 - randomZ)/randomX)); //angle that the ball is facing the hoop
+      const angle = Math.atan(Math.abs((-29.0 - randomZ)/randomX)); //angle that the ball is facing the hoop
       if(randomX < 0.0){
-          const LookAt = Mat4.look_at(vec3(randomX, 1.5, randomZ + 5), vec3(0, 1.5, -29), vec3(0, 1.0, 0));
+        const LookAt = Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0, 1.5, -29), vec3(0, 1.0, 0));
         //program_state.set_camera(LookAt);
         this.ballPOV = LookAt;
         //this.cameraPosition = model_transform.times(Mat4.translation(randomX+2.0*Math.cos(angle), -0.5, randomZ-2.0*Math.sin(angle)))
         //.times(Mat4.translation(-1,-1,0)).times(Mat4.scale(0.8,1,0.8)).times(Mat4.translation(1,1,0));
-        const ballLocation = Mat4.look_at(vec3(randomX, 0, randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0))
-        const arrowLocation = Mat4.look_at(vec3(randomX, 0, randomZ), vec3(0,2.6,-11.7), vec3(0, 1, 0));
+        const ballLocation = Mat4.look_at(vec3(randomX, 0, randomZ), vec3(0,2.6,-29.0), vec3(0, 1.0, 0))
+        const arrowLocation = Mat4.look_at(vec3(randomX + 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-29), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
         this.arrow_transform = Mat4.inverse(arrowLocation);
         this.wind_strength = Math.random();
@@ -458,12 +458,12 @@ export class basketBallScene extends Scene {
         //console.log(Mat4.look_at(vec3(randomX - 4*Math.cos(angle), 1, randomZ + 4*Math.sin(angle)), vec3(0,2.6,-15.7), vec3(0, 1.0, 0)))
       }
       else{
-          const LookAt = Mat4.look_at(vec3(randomX, 1.5, randomZ + 5), vec3(0, 1.5, -29), vec3(0, 1.0, 0));
-        program_state.set_camera(LookAt);
-        this.ballPOV = LookAt
-        const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
-        const arrowLocation = Mat4.look_at(vec3(randomX , 0, randomZ ), vec3(0,2.6,-11.7), vec3(0, 1, 0));
+        this.ballPOV = Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-29), vec3(0, 1, 0));
+        program_state.set_camera(this.ballPOV);
+        const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-29.0), vec3(0, 1.0, 0));
+        const arrowLocation = Mat4.look_at(vec3(randomX - 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-29), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
+        this.arrow_transform = Mat4.inverse(arrowLocation)
         this.wind_strength = Math.random();
         this.wind_direction = vec3(Math.random(), Math.random(), Math.random())
         this.arrow_transform = Mat4.inverse(arrowLocation);
