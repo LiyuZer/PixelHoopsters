@@ -578,6 +578,8 @@ export class basketBallScene extends Scene {
         this.new_line();
         this.live_string(box => box.textContent = "- Wind Direction left/right: " + this.wind_direction[1].toFixed(2))
         this.new_line();
+        this.live_string(box => box.textContent = "- Power: " + this.power.toFixed(2))
+        this.new_line();
         this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
         this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true;this.direction_vector=vec3(0,6,-6)});
         this.key_triggered_button("change POV", ["p"],() => {this.camerapov = !this.camerapov});
@@ -588,6 +590,19 @@ export class basketBallScene extends Scene {
         this.key_triggered_button("down", ["s"], ()=>{this.direction_vector.times(Mat4.rotation(-0.01,1,0,0))});
         this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.1;this.arrow_angle+=0.1; this.change_arrow();});
         this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.0001;this.arrow_angle-=0.1; this.change_arrow();});
+
+        this.key_triggered_button("power up", ["k"], ()=>{
+            this.power = this.power + 0.05;
+            if(this.power > 1){
+                this.power = 1;
+            }
+            });
+        this.key_triggered_button("power down", ["l"], ()=>{
+            this.power = this.power - 0.05;
+            if(this.power < 0){
+                this.power = 0;
+            }
+        });
     }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
     
@@ -758,8 +773,8 @@ export class basketBallScene extends Scene {
         if(this.ball_thrown) {
           //calculate our direction vector based on changes in angle and current power
           
-          if(this.direction_vector == vec3(0,0,0)){ //in case our direction vector has no magnitude
-            this.direction_vector == vec3(1,1,1); 
+          if(this.direction_vector[0] == 0 && this.direction_vector[1] == 0 && this.direction_vector[2] == 0){ //in case our direction vector has no magnitude
+            this.direction_vector = vec3(1,1,1);
           }
           
           //this.direction_vector = vec3(this.direction_vector[0][0],this.direction_vector[1,0],this.direction_vector[2,0])
