@@ -496,6 +496,7 @@ export class basketBallScene extends Scene {
     update_vert_angle(){
       //this.direction_vector = new Mat4([this.direction_vector[0]],[this.direction_vector[1]],[this.direction_vector[2]],[1])
       //this.direction_vector = Mat4.rotation(this.vertAngle,1,0,0).times(this.direction_vector);
+      console.log(this.vertAngle)
       this.direction_vector = new Mat4([this.direction_vector[0]],[this.direction_vector[1]],[this.direction_vector[2]],[1])
       this.direction_vector = Mat4.rotation(this.vertAngle,1,0,0).times(this.direction_vector);
       //this.direction_vector = this.direction_vector.times(Mat4.rotation(this.vertAngle,1,0,0))
@@ -783,8 +784,8 @@ export class basketBallScene extends Scene {
           program_state.set_camera(Mat4.identity().times(Mat4.translation(0,-5,-40)).times(Mat4.rotation(1.3,0,1,0)));
         }
         else if(this.ball_thrown){
-          //program_state.set_camera(Mat4.inverse(this.ball_transform.times(Mat4.translation(0,1,5))));
-          program_state.camera_inverse = Mat4.inverse(this.ball_transform.times(Mat4.translation(0,1,5)));
+          //program_state.set_camera(Mat4.inverse(this.ball_transform.times(Mat4.rotation(0.524,-1,0,0)).times(Mat4.translation(0,0,5))));
+          program_state.camera_inverse = Mat4.inverse(this.ball_transform.times(Mat4.rotation(0.75,-1,0,0)).times(Mat4.translation(0,0,5)))
           program_state.camera_inverse = program_state.camera_inverse.map((x,i) =>
           Vector.from(program_state.camera_inverse[i]).mix(x, 0.1));
         }
