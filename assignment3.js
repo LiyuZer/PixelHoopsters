@@ -68,6 +68,7 @@ export class basketBallScene extends Scene {
         this.vertVelocity = 10.61; //temp variable for projectile motion will delete in actual implementation
         this.wind_strength = Math.random();
         this.wind_direction = vec3(Math.random(), Math.random(), Math.random())
+        this.score = 0;
         this.shapes = {
             //basketball: new defs.Subdivision_Sphere(5),
             //kkkteapot: new Shape_From_File("assets/teapot.obj"),
@@ -208,6 +209,26 @@ export class basketBallScene extends Scene {
         }
         var yDistance = Math.abs(p[1] - centerY);
         return ((xzDistance <= radius && xzDistance >= radius * 0.8) || (xzDistance >= radius && xzDistance <= radius + 0.1 ) )&& yDistance <= height;
+    }
+    static checkForScore(p)
+    {
+       const hoopX = 0;
+       const hoopY = 6;
+       const hoopZ = -27;
+       const hoopRadius = 1.4;
+       const hoopHeight = 2;
+        if (
+        p[0] >= hoopX - hoopRadius &&
+        p[0] <= hoopX + hoopRadius &&
+        p[1] >= hoopY - hoopHeight / 2 &&
+        p[1] <= hoopY + hoopHeight / 2 &&
+        p[2] >= hoopZ - hoopRadius &&
+        p[2] <= hoopZ + hoopRadius
+        ) 
+        {
+        return true; // Ball has gone through the hoop.
+        }
+        return false;
     }
 
 
@@ -359,11 +380,15 @@ export class basketBallScene extends Scene {
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
-            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.6);
+            this.direction_vector = vec3(directional_vector[0]-wind[0], directional_vector[1] - wind[1] - gravity * deltaTime, directional_vector[2] - wind[2]).plus(dragForceVector).times(0.6);
             normal = normal.times(0.5).plus(vec3(0,3.65,-26));
             this.ball_transform = Mat4.identity().times(Mat4.translation(normal[0], normal[1], normal[2]));
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
 
+        }
+        else if (basketBallScene.checkForScore(point))
+        {
+            this.score++;
         }
         else{
             const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity/2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
@@ -411,7 +436,7 @@ export class basketBallScene extends Scene {
         this.ball_transform = Mat4.inverse(ballLocation);
         this.arrow_transform = Mat4.inverse(arrowLocation);
         this.wind_strength = Math.random();
-        this.wind_direction = vec3(Math.random(), Math.random(), 0.0)
+        this.wind_direction = vec3(Math.random(), Math.random(), Math.random())
         //this.ball_transform = this.ball_transform.times(Mat4.translation(Math.cos(angle),-1,Math.sin(angle)));
         //console.log(Mat4.look_at(vec3(randomX - 4*Math.cos(angle), 1, randomZ + 4*Math.sin(angle)), vec3(0,2.6,-15.7), vec3(0, 1.0, 0)))
       }
@@ -504,6 +529,8 @@ export class basketBallScene extends Scene {
     }
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
+        this.live_string(box => box.textContent = "- Current score: " + this.score) 
+        this.new_line();
         this.live_string(box => box.textContent = "- Wind Strength: " + this.wind_strength.toFixed(2)) 
         this.new_line();
         this.live_string(box => box.textContent = "- Wind Direction up/down: " + this.wind_direction[0].toFixed(2))
@@ -715,6 +742,7 @@ export class basketBallScene extends Scene {
         ,this.materials.arrow.override({color:this.arrowColor}));
         //this.create_stadium(context, program_state, model_transform);
         }
+        
 }
 
 
