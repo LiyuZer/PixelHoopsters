@@ -12,7 +12,7 @@ const {
 const {Cube, Axis_Arrows, Textured_Phong, Phong_Shader, Basic_Shader, Subdivision_Sphere} = defs
 const ground_level = -0.9;
 const  backboardX = [-2, 2];
-const  backboardY = [3.9, 6];
+const  backboardY = [3.5, 6];
 const  backboardZ = [-27.49, -26.2];
 const Square =
     class Square extends tiny.Vertex_Buffer {
@@ -216,7 +216,7 @@ export class basketBallScene extends Scene {
     }
     static intersect_stand(p){
         console.log(p);
-        return p[0] <= 0.2 && p [0] >= -0.2 && p[1] >= -1.5 &&  p[1] <= 4.5 && p[2] <= -28 && p[2] >= -30;
+        return p[0] <= 0.5 && p [0] >= -0.5 && p[1] >= -1.5 &&  p[1] <= 6 && p[2] <= -27.5 && p[2] >= -30;
     }
     static checkForScore(p)
     {
@@ -354,7 +354,7 @@ export class basketBallScene extends Scene {
         const A = 2.4567; // Cross-sectional area of the ball
         const deltaTime = this.dt ; // Storing this.dt in deltaTime
 
-
+        console.log(point);
         if(basketBallScene.intersect_ground(point)){
             var negated_vec = directional_vector.times(-1);
             directional_vector = (vec3(0,1,0).times(2 * (vec3(0,1,0).dot(negated_vec)))).minus(negated_vec);
@@ -403,12 +403,13 @@ export class basketBallScene extends Scene {
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
             this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.6);
+            if (-28 - point[2] > 0) // This is the z location
+            {
+                position_vector[2] = -28 - point[2] + position_vector[2];
+            }
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2] ));
         }
         else{
-            if (basketBallScene.checkForScore(point)){
-                this.score++;
-            }
             const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity/2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
@@ -416,7 +417,11 @@ export class basketBallScene extends Scene {
             this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector);
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
         }
+        if (basketBallScene.checkForScore(point)){
+            this.score++;
+        }
 
+        return point;
     }
 
 
@@ -440,8 +445,10 @@ export class basketBallScene extends Scene {
       {
         this.score = 0;
       }
-      randomX = Math.floor(xScalar* Math.random() * 5);
-      randomZ = Math.floor(yScalar* Math.random() * 5) - 10;
+      // randomX = Math.floor(xScalar* Math.random() * 2);
+      // randomZ = Math.floor(yScalar* Math.random() * 2) - 10;
+        randomX= 0;
+      randomZ = -10
 
       var ball_location_vector = vec3(0,2.6,-11.7);
       this.ball_transform = model_transform.times(Mat4.translation(randomX,0,randomZ ));
@@ -854,7 +861,10 @@ export class basketBallScene extends Scene {
           //program_state.set_camera(Mat4.inverse(this.ball_transform).times(Mat4.translation(0,-1,-30)).times(Mat4.rotation(0.35,1,0,0)));
         }
         else{
-          this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
+          var point = this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
+            if(point[1] < -1 && this.ball_thrown){
+                this.round_setup(model_transform, program_state);
+            }
         }
 
         //this.create_court(context,program_state,model_transform);
