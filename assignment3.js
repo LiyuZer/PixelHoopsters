@@ -588,7 +588,7 @@ export class basketBallScene extends Scene {
         this.live_string(box => box.textContent = "- Wind Direction left/right: " + this.wind_direction[1].toFixed(2))
         this.new_line();
         this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
-        this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true});
+        this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true;this.direction_vector=vec3(0,6,-6)});
         this.key_triggered_button("change POV", ["p"],() => {this.camerapov = !this.camerapov});
         this.key_triggered_button("New Round!", ["n"], ()=>{this.newRound = true});
 
@@ -767,21 +767,30 @@ export class basketBallScene extends Scene {
         //basketball shot at 10 degrees to the right
         if(this.ball_thrown) {
           //calculate our direction vector based on changes in angle and current power
-          const maxVelocity = this.power * 30.0;
-          let xDir = maxVelocity * Math.cos(this.angle);
-          let zDir = maxVelocity * Math.sin(this.angle);
-          if(zDir > 0){
-            zDir = -1.0*zDir
-          }
-          this.direction_vector = vec3(xDir,6,zDir);
+          
           if(this.direction_vector == vec3(0,0,0)){ //in case our direction vector has no magnitude
             this.direction_vector == vec3(1,1,1); 
           }
           
+          //this.direction_vector = vec3(this.direction_vector[0][0],this.direction_vector[1,0],this.direction_vector[2,0])
           this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
           let maxcamheight = t/100;
           if (maxcamheight > 20){
             maxcamheight = 20;
+          }
+          if(false){
+            this.direction_vector = vec3(0,2,-6);
+            const maxVelocity = this.power * 30.0;
+            let xDir = maxVelocity * Math.cos(this.angle);
+            let zDir = maxVelocity * Math.sin(this.angle);
+            if(zDir > 0){
+              zDir = -1.0*zDir
+            }
+            this.direction_vector = vec3(xDir,6,zDir);
+            //this.direction_vector = new Mat4([this.direction_vector[0]],[this.direction_vector[1]],[this.direction_vector[2]],[1])
+            console.log(this.direction_vector);
+            //this.direction_vector = Mat4.rotation(3,1,0,0).times(this.direction_vector);
+            console.log(this.direction_vector);
           }
           //Optional stationary camera angle that can replace the ball POV
           program_state.set_camera(Mat4.identity().times(Mat4.translation(0,-5,-40)).times(Mat4.rotation(1.3,0,1,0)));
