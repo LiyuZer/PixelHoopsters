@@ -790,7 +790,7 @@ export class basketBallScene extends Scene {
         }
         */
         //basketball shot at 10 degrees to the right
-        if(this.ball_thrown) {
+        if(!this.ball_thrown) {
           //calculate our direction vector based on changes in angle and current power
           const maxVelocity = this.power * 30.0;
           let xDir = maxVelocity * Math.cos(this.angle);
@@ -802,7 +802,6 @@ export class basketBallScene extends Scene {
           if(this.direction_vector == vec3(0,0,0)){ //in case our direction vector has no magnitude
             this.direction_vector == vec3(1,1,1); 
           }
-          this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
           let maxcamheight = t/100;
           if (maxcamheight > 20){
             maxcamheight = 20;
@@ -815,6 +814,9 @@ export class basketBallScene extends Scene {
           //Optional stationary camera angle that can replace the ball POV
           program_state.set_camera(Mat4.identity().times(Mat4.translation(0,-5,-40)).times(Mat4.rotation(1.3,0,1,0)));
           //program_state.set_camera(Mat4.inverse(this.ball_transform).times(Mat4.translation(0,-1,-30)).times(Mat4.rotation(0.35,1,0,0)));
+        }
+        else{
+            this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
         }
 
         //this.create_court(context,program_state,model_transform);
