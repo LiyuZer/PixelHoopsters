@@ -60,7 +60,7 @@ export class basketBallScene extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-
+        
         this.arrow_angle = 3.1415;
         this.arrow_transform = Mat4.identity();
         this.ball_transform = Mat4.identity();
@@ -69,6 +69,7 @@ export class basketBallScene extends Scene {
         this.wind_strength = Math.random();
         this.wind_direction = vec3(Math.random(), Math.random(), Math.random())
         this.score = 0;
+        this.keepscore = true;
         this.shapes = {
             //basketball: new defs.Subdivision_Sphere(5),
             //kkkteapot: new Shape_From_File("assets/teapot.obj"),
@@ -341,6 +342,7 @@ export class basketBallScene extends Scene {
         var point = this.ball_transform.times(vec4(0,0,0,1));
         var wind = this.wind_direction * this.wind_strength
         var directional_vector = this.direction_vector;
+        var floorCount = 0
         // Constants for air resistance
         const rho = 0.003; // Air density (kg/m^3) at sea level
         const Cd = 0.2; // Drag coefficient for a sphere
@@ -356,6 +358,11 @@ export class basketBallScene extends Scene {
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
             this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.8);
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1] + (ground_level - point[1]), position_vector[2] ));
+            floorCount++;
+        }
+        if (floorCount > 2)
+        {
+            this.round_setup(model_transform,program_state);
         }
         else if(basketBallScene.intersect_backBoard(point)) {
             var negated_vec = directional_vector.times(-1);
@@ -381,7 +388,7 @@ export class basketBallScene extends Scene {
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
-            this.direction_vector = vec3(directional_vector[0]-wind[0], directional_vector[1] - wind[1] - gravity * deltaTime, directional_vector[2] - wind[2]).plus(dragForceVector).times(0.6);
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.6);
             normal = normal.times(0.5).plus(vec3(0,3.65,-26));
             this.ball_transform = Mat4.identity().times(Mat4.translation(normal[0], normal[1], normal[2]));
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
@@ -396,7 +403,7 @@ export class basketBallScene extends Scene {
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
-            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector);
+            this.direction_vector = vec3(directional_vector[0] - wind[0], directional_vector[1] - wind[1] - gravity * deltaTime, directional_vector[2] - wind[2]).plus(dragForceVector);
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
         }
     }
@@ -417,6 +424,10 @@ export class basketBallScene extends Scene {
       }
       if(Math.random()<0.5){
         yScalar = 1.0;
+      }
+      if(this.keepscore == false)
+      {
+        this.score = 0;
       }
       randomX = Math.floor(xScalar*Math.random() * 14.0);
       randomZ = Math.floor(yScalar*Math.random() * 20.0);
@@ -699,7 +710,8 @@ export class basketBallScene extends Scene {
         this.create_court(context,program_state,model_transform, false, false, false);
 
         if (this.newRound){
-          this.round_setup(model_transform,program_state);
+            this.keepscore = false;
+            this.round_setup(model_transform,program_state);
         }
 
         if(!this.camerapov){
