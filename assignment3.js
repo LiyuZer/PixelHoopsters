@@ -62,10 +62,10 @@ export class basketBallScene extends Scene {
         super();
 
         this.arrow_angle = 3.1415;
+        this.verticalAngle = 0.0;
         this.arrow_transform = Mat4.identity();
         this.ball_transform = Mat4.identity();
         this.arrowColor = hex_color("#90FF90");
-        this.vertVelocity = 10.61; //temp variable for projectile motion will delete in actual implementation
         this.wind_strength = Math.random();
         this.wind_direction = vec3(Math.random(), Math.random(), Math.random())
         this.shapes = {
@@ -547,11 +547,6 @@ export class basketBallScene extends Scene {
         this.key_triggered_button("down", ["s"], ()=>{this.direction_vector.times(Mat4.rotation(-0.01,1,0,0))});
         this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.1;this.arrow_angle+=0.1; this.change_arrow();});
         this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.0001;this.arrow_angle-=0.1; this.change_arrow();});
-        if(this.camerapov){
-          this.key_triggered_button("Increase Vertical Angle",["w"],()=>{
-            //this.direction_vector[2] += this.direction_vector;
-          })
-        }
     }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
     
@@ -734,6 +729,7 @@ export class basketBallScene extends Scene {
           if(this.direction_vector == vec3(0,0,0)){ //in case our direction vector has no magnitude
             this.direction_vector == vec3(1,1,1); 
           }
+          
           this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
           let maxcamheight = t/100;
           if (maxcamheight > 20){
