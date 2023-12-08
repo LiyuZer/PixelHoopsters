@@ -532,9 +532,10 @@ export class basketBallScene extends Scene {
 
 
         this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), shadow_pass ? this.materials.ball_texture : this.materials.pure);
-        this.shapes.cone.draw(context,program_state,this.arrow_transform.times(Mat4.translation(0,0,-.433015))
-        .times(Mat4.rotation(this.arrow_vertAngle,1,0,0)).times(Mat4.rotation(this.arrow_angle,0,1,0)).times(Mat4.translation(0,0,0.433015)).times(Mat4.scale(0.1,0.1,0.45))
-        ,this.materials.arrow.override({color:this.arrowColor}));
+        if(!this.ball_thrown){this.shapes.cone.draw(context,program_state,this.arrow_transform.times(Mat4.translation(0,0,-.433015))
+          .times(Mat4.rotation(this.arrow_vertAngle,1,0,0)).times(Mat4.rotation(this.arrow_angle,0,1,0)).times(Mat4.translation(0,0,0.433015)).times(Mat4.scale(0.1,0.1,0.45))
+          ,this.materials.arrow.override({color:this.arrowColor}));}
+        
 
         // // left side
         // let left_transform = model_transform.times(Mat4.translation(-17,8,0)).times(Mat4.scale(0.1,8,30));
@@ -612,17 +613,32 @@ export class basketBallScene extends Scene {
         this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.01;this.update_hori_angle();this.arrow_angle+=0.1; this.change_arrow();});
         this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.01;this.update_hori_angle();this.arrow_angle-=0.1; this.change_arrow();});
 
-        this.key_triggered_button("power up", ["k"], ()=>{
-            this.power = this.power + 0.05;
-            if(this.power > 1){
-                this.power = 1;
-            }
-            });
+        this.key_triggered_button("power up", ["u"], ()=>{
+          if(this.power != 0.0){
+            this.direction_vector[0] = this.direction_vector[0]/this.power;
+            this.direction_vector[2] = this.direction_vector[2]/this.power;
+          }
+          this.power = this.power + 0.05;
+          if(this.power > 1){
+            this.power = 1;
+          }
+          this.change_arrow();
+          this.direction_vector[0] = this.power * this.direction_vector[0];
+          this.direction_vector[2] = this.power * this.direction_vector[2];
+          console.log(this.direction_vector);
+          });
         this.key_triggered_button("power down", ["l"], ()=>{
-            this.power = this.power - 0.05;
-            if(this.power < 0){
-                this.power = 0;
-            }
+          if(this.power != 0.0){
+            this.direction_vector[0] = this.direction_vector[0]/this.power;
+            this.direction_vector[2] = this.direction_vector[2]/this.power;
+          }
+          this.power = this.power - 0.05;
+          if(this.power < 0){
+            this.power = 0;
+          }
+          this.change_arrow();
+          this.direction_vector[0] = this.power * this.direction_vector[0];
+          this.direction_vector[2] = this.power * this.direction_vector[2];
         });
     }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
@@ -751,6 +767,12 @@ export class basketBallScene extends Scene {
 
         if(!this.camerapov){
           program_state.set_camera(Mat4.identity().times(Mat4.translation(0,-5,-40)).times(Mat4.rotation(1.3,0,1,0)));
+        }
+        else if(this.ball_thrown){
+          //program_state.set_camera(Mat4.inverse(this.ball_transform.times(Mat4.translation(0,1,5))));
+          program_state.camera_inverse = Mat4.inverse(this.ball_transform.times(Mat4.translation(0,1,5)));
+          program_state.camera_inverse = program_state.camera_inverse.map((x,i) =>
+          Vector.from(program_state.camera_inverse[i]).mix(x, 0.1));
         }
         else{
           program_state.set_camera(this.ballPOV);
