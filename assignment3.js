@@ -1,6 +1,6 @@
 import {defs, tiny} from './examples/common.js';
 import {Shape_From_File} from './examples/obj-file-demo.js'
-
+import {Text_Demo, Text_Line} from './examples/text-demo.js'
 
 import {Color_Phong_Shader, Shadow_Textured_Phong_Shader,
     Depth_Texture_Shader_2D, Buffered_Texture, LIGHT_DEPTH_TEX_SIZE} from './examples/shadow-demo-shaders.js'
@@ -79,6 +79,7 @@ export class basketBallScene extends Scene {
             square_2d: new Square(),
             triangle: new Triangle(),
             cone: new defs.Closed_Cone(50,50),
+            text: new Text_Line(10),
             //stands: new defs.Subdivision_Sphere(5), // adjust parameters as needed
             //roof: new defs.Cube(),
             //scorer: new defs.Cube(),
@@ -150,9 +151,16 @@ export class basketBallScene extends Scene {
                 light_depth_texture: null
     
             }),
+            text_image: new Material(new Textured_Phong(1), {
+              ambient: 1, diffusivity: 1, specularity: 0,
+              texture: new Texture("assets/text.png")
+            }),
             pure : new Material(new Color_Phong_Shader(), {
             }),
-
+            grey : new Material(new Phong_Shader(), {
+              color: color(.5, .5, .5, 1), ambient: 0,
+              diffusivity: .3, specularity: .5, smoothness: 10
+          }),
     
 
         }
@@ -418,8 +426,8 @@ export class basketBallScene extends Scene {
         //console.log(Mat4.look_at(vec3(randomX - 4*Math.cos(angle), 1, randomZ + 4*Math.sin(angle)), vec3(0,2.6,-15.7), vec3(0, 1.0, 0)))
       }
       else{
-        program_state.set_camera(Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
         this.ballPOV = Mat4.look_at(vec3(randomX + 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
+        program_state.set_camera(this.ballPOV);
         const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
         const arrowLocation = Mat4.look_at(vec3(randomX - 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
@@ -449,10 +457,13 @@ export class basketBallScene extends Scene {
                 this.materials.light_src.override({color: light_color}));
         }
 
+        
 
         model_transform = model_transform.times(Mat4.translation(0,-1.5,0));
         let court_transform = model_transform.times(Mat4.scale(17,0.1,30));
 
+        // Draw the cube
+        let scoreboard_transform = model_transform.times(Mat4.translation(0,10,-30)).times(Mat4.scale(3,2,0.5));
 
         this.shapes.cube.draw(context,program_state, court_transform, shadow_pass ? this.materials.court_texture : this.materials.pure);
 
@@ -474,8 +485,21 @@ export class basketBallScene extends Scene {
 
 
         this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), shadow_pass ? this.materials.ball_texture : this.materials.pure);
+        
+        //draw scoreboard
+        this.shapes.cube.draw(context, program_state, scoreboard_transform, this.materials.grey);
 
-
+        // Text settings
+        const text_string = "1"; // The score you want to display
+        this.shapes.text.set_string(text_string, context.context);
+        let textshiftlength = text_string.length == 1 ? 0:-0.4;
+        // Calculate the transformation for the text
+        let text_transform = scoreboard_transform
+            .times(Mat4.translation(textshiftlength, 0, 1.01)) // Adjust these values to position the text
+            .times(Mat4.scale(0.5, .5, .5));   // Adjust the scale to fit the text on the cube face
+            
+        // Draw the text
+        this.shapes.text.draw(context, program_state, text_transform, this.materials.text_image);
         // // left side
         // let left_transform = model_transform.times(Mat4.translation(-17,8,0)).times(Mat4.scale(0.1,8,30));
         // this.shapes.cube.draw(context, program_state, left_transform, this.materials.wall_texture);
@@ -540,8 +564,8 @@ export class basketBallScene extends Scene {
         }
 
         if (!context.scratchpad.controls) { //only once per instance of our game
-          context.scratchpad.controls = 1;
-          //this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
+          //context.scratchpad.controls = 1;
+          this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
           // Define the global camera and projection matrices, which are stored in program_state.
           let LookAt = Mat4.look_at(vec3(0, 0, 10), vec3(0, 0, 0), vec3(0, 1, 0));
           program_state.set_camera(LookAt);  
@@ -595,8 +619,7 @@ export class basketBallScene extends Scene {
           })
 
         }
-
-        
+      
         // The position of the light
         this.light_position = Mat4.rotation(1500, 0, 1, 0).times(vec4(3, 25, 0, 1));
         // The color of the light
@@ -643,7 +666,6 @@ export class basketBallScene extends Scene {
         else{
           program_state.set_camera(this.ballPOV);
         }
-
 
         // Step 2: unbind, draw to the canvas
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
