@@ -164,7 +164,7 @@ export class basketBallScene extends Scene {
         this.angle = 0.0;
         this.power = 0.0;
         this.newRound = true;
-
+        this.scored = false;
         /* DEMO CODE*/
 
         // For the floor or other plain objects
@@ -208,7 +208,6 @@ export class basketBallScene extends Scene {
         return ((xzDistance <= radius && xzDistance >= radius * 0.8) || (xzDistance >= radius && xzDistance <= radius + 0.1 ) )&& yDistance <= height;
     }
     static intersect_stand(p){
-        console.log(p);
         return p[0] <= 0.5 && p [0] >= -0.5 && p[1] >= -1.5 &&  p[1] <= 6 && p[2] <= -27.5 && p[2] >= -30;
     }
     static checkForScore(p)
@@ -387,6 +386,22 @@ export class basketBallScene extends Scene {
             this.ball_transform = Mat4.identity().times(Mat4.translation(normal[0], normal[1], normal[2]));
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
 
+
+            const centerX = 0, centerY = 3.5, centerZ = -26;
+            const radius = 0.5, height = 0.25;
+            var xzDistance = 0
+            var l2_square = point[0] * point[0] + (point[2] - centerZ) * (point[2] - centerZ);
+            if(l2_square == 0.0) {
+                xzDistance = 0.0;
+            }
+            else{
+                xzDistance = Math.sqrt(l2_square);
+            }
+            if(xzDistance < 0.8 && !this.scored){
+                this.scored = true;
+                this.score++;
+            }
+
         }
         else if(basketBallScene.intersect_stand(point)){
             var negated_vec = directional_vector.times(-1);
@@ -410,9 +425,9 @@ export class basketBallScene extends Scene {
             this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector);
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
         }
-        if (basketBallScene.checkForScore(point)){
-            this.score++;
-        }
+        // if (basketBallScene.checkForScore(point)){
+        //     this.score++;
+        // }
 
         return point;
     }
@@ -423,6 +438,7 @@ export class basketBallScene extends Scene {
     
     }
     round_setup(model_transform,program_state){
+        this.scored = false;
       this.ball_thrown = false;
       let xScalar = 1.0;
       let yScalar = 1.0;
@@ -481,7 +497,7 @@ export class basketBallScene extends Scene {
       //program_state.set_camera(Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
     }
     update_hori_angle(){
-      const maxVelocity = this.power * 15;
+      const maxVelocity = this.power * 30;
       let xDir = maxVelocity * Math.cos(this.angle);
       let zDir = maxVelocity * Math.sin(this.angle);
       if(zDir > 0){
@@ -628,10 +644,10 @@ export class basketBallScene extends Scene {
         this.key_triggered_button("New Round!", ["n"], ()=>{this.newRound = true});
 
 
-        this.key_triggered_button("up", ["w"], ()=>{this.vertAngle += 0.01;this.update_vert_angle();console.log(this.direction_vector)});
-        this.key_triggered_button("down", ["s"], ()=>{this.vertAngle -= 0.01;this.update_vert_angle()});
-        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.01;this.update_hori_angle();this.arrow_angle+=0.1; this.change_arrow();});
-        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.01;this.update_hori_angle();this.arrow_angle-=0.1; this.change_arrow();});
+        this.key_triggered_button("up", ["w"], ()=>{this.vertAngle += 0.05;this.update_vert_angle();console.log(this.direction_vector)});
+        this.key_triggered_button("down", ["s"], ()=>{this.vertAngle -= 0.05;this.update_vert_angle()});
+        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.01;this.update_hori_angle();this.arrow_angle+=0.05; this.change_arrow();});
+        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.01;this.update_hori_angle();this.arrow_angle-=0.05; this.change_arrow();});
 
         this.key_triggered_button("power up", ["u"], ()=>{
           if(this.power != 0.0){
@@ -776,7 +792,7 @@ export class basketBallScene extends Scene {
         this.create_court(context,program_state,model_transform, false, false, false);
 
         if (this.newRound){
-          this.keepscore = false;
+          this.keepscore = true;
           this.round_setup(model_transform,program_state);
         }
 
@@ -855,9 +871,6 @@ export class basketBallScene extends Scene {
         }
         else{
           var point = this.basketball_thrown(); //projectile motion function requires us to store current vert velocity
-            if(point[1] < -1 && this.ball_thrown){
-                this.round_setup(model_transform, program_state);
-            }
         }
 
         //this.create_court(context,program_state,model_transform);
