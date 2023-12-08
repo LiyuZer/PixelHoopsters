@@ -349,6 +349,7 @@ export class basketBallScene extends Scene {
         const A = 2.4567; // Cross-sectional area of the ball
         const deltaTime = this.dt ; // Storing this.dt in deltaTime
 
+
         if(basketBallScene.intersect_ground(point)){
             var negated_vec = directional_vector.times(-1);
             directional_vector = (vec3(0,1,0).times(2 * (vec3(0,1,0).dot(negated_vec)))).minus(negated_vec);
@@ -356,7 +357,11 @@ export class basketBallScene extends Scene {
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
             const dragForceVector = this.direction_vector.normalized().times(-dragForceMagnitude);
-            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.8);
+            this.direction_vector = vec3(directional_vector[0], directional_vector[1] - gravity * deltaTime, directional_vector[2]).plus(dragForceVector).times(0.6);
+            console.log(velocityMagnitude);
+            if(velocityMagnitude < 1){
+                this.direction_vector = vec3(0,0,0);
+            }
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1] + (ground_level - point[1]), position_vector[2] ));
             floorCount++;
         }
@@ -394,11 +399,10 @@ export class basketBallScene extends Scene {
             this.ball_transform = this.ball_transform.times(Mat4.translation(position_vector[0], position_vector[1], position_vector[2]));
 
         }
-        else if (basketBallScene.checkForScore(point))
-        {
-            this.score++;
-        }
         else{
+            if (basketBallScene.checkForScore(point)){
+                this.score++;
+            }
             const position_vector = vec3(directional_vector[0] * deltaTime, directional_vector[1] * deltaTime - (gravity/2) * deltaTime * deltaTime, directional_vector[2] * deltaTime);
             const velocityMagnitude = Math.sqrt(Math.pow(directional_vector[0], 2) + Math.pow(directional_vector[1], 2) + Math.pow(directional_vector[2], 2));
             const dragForceMagnitude = 0.5 * rho * velocityMagnitude * velocityMagnitude * Cd * A;
