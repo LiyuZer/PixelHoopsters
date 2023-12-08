@@ -458,9 +458,11 @@ export class basketBallScene extends Scene {
         program_state.set_camera(LookAt);
         this.ballPOV = LookAt
         const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
-        const arrowLocation = Mat4.look_at(vec3(randomX - 2*Math.cos(angle), 0, randomZ - 2*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
+        const arrowLocation = Mat4.look_at(vec3(randomX - Math.cos(angle), 0, randomZ - Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0));
         this.ball_transform = Mat4.inverse(ballLocation);
-        this.arrow_transform = Mat4.inverse(arrowLocation)
+        this.wind_strength = Math.random();
+        this.wind_direction = vec3(Math.random(), Math.random(), Math.random())
+        this.arrow_transform = Mat4.inverse(arrowLocation);
       }
       console.log("restart")
       this.direction_vector = vec3(0,0,0);
@@ -479,7 +481,7 @@ export class basketBallScene extends Scene {
     }
     update_vert_angle(){
       this.direction_vector = new Mat4([this.direction_vector[0]],[this.direction_vector[1]],[this.direction_vector[2]],[1])
-      this.direction_vector = Mat4.rotation(3,1,0,0).times(this.direction_vector);
+      this.direction_vector = Mat4.rotation(0,1,0,0).times(this.direction_vector);
     }
     create_court(context,program_state,model_transform, shadow_pass, draw_light_source=false, draw_shadow=false){
         //create the court ground
@@ -524,7 +526,9 @@ export class basketBallScene extends Scene {
 
 
         this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), shadow_pass ? this.materials.ball_texture : this.materials.pure);
-
+        this.shapes.cone.draw(context,program_state,this.arrow_transform.times(Mat4.translation(0,0,-.433015))
+        .times(Mat4.rotation(this.arrow_angle,0,1,0)).times(Mat4.translation(0,0,0.433015)).times(Mat4.scale(0.1,0.1,0.25))
+        ,this.materials.arrow.override({color:this.arrowColor}));
 
         // // left side
         // let left_transform = model_transform.times(Mat4.translation(-17,8,0)).times(Mat4.scale(0.1,8,30));
@@ -806,11 +810,6 @@ export class basketBallScene extends Scene {
           if (maxcamheight > 20){
             maxcamheight = 20;
           }
-          if(false){
-            
-            
-            
-          }
           //Optional stationary camera angle that can replace the ball POV
           program_state.set_camera(Mat4.identity().times(Mat4.translation(0,-5,-40)).times(Mat4.rotation(1.3,0,1,0)));
           //program_state.set_camera(Mat4.inverse(this.ball_transform).times(Mat4.translation(0,-1,-30)).times(Mat4.rotation(0.35,1,0,0)));
@@ -821,9 +820,9 @@ export class basketBallScene extends Scene {
 
         //this.create_court(context,program_state,model_transform);
         //this.shapes.sphere.draw(context, program_state, this.ball_transform.times(Mat4.scale(0.391,0.391,0.391)), this.materials.texture_shadow);
-        this.shapes.cone.draw(context,program_state,this.arrow_transform.times(Mat4.translation(0,0,-.433015))
-        .times(Mat4.rotation(this.arrow_angle,0,1,0)).times(Mat4.translation(0,0,0.433015)).times(Mat4.scale(0.1,0.1,0.25))
-        ,this.materials.arrow.override({color:this.arrowColor}));
+        //this.shapes.cone.draw(context,program_state,this.arrow_transform.times(Mat4.translation(0,0,-.433015))
+        //.times(Mat4.rotation(this.arrow_angle,0,1,0)).times(Mat4.translation(0,0,0.433015)).times(Mat4.scale(0.3,0.3,0.25))
+        //,this.materials.arrow.override({color:this.arrowColor}));
         //this.create_stadium(context, program_state, model_transform);
         }
         
