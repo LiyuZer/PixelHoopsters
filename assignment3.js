@@ -440,10 +440,8 @@ export class basketBallScene extends Scene {
       {
         this.score = 0;
       }
-      // randomX = Math.floor(xScalar* Math.random() * 5);
-      // randomZ = Math.floor(yScalar* Math.random() * 5) - 10;
-        randomX = 0;
-        randomZ = - 10;
+      randomX = Math.floor(xScalar* Math.random() * 5);
+      randomZ = Math.floor(yScalar* Math.random() * 5) - 10;
 
       var ball_location_vector = vec3(0,2.6,-11.7);
       this.ball_transform = model_transform.times(Mat4.translation(randomX,0,randomZ ));
@@ -452,7 +450,7 @@ export class basketBallScene extends Scene {
       //set our camera to ball's new location (work in progress as camera does not align perfectly yet)
       const angle = Math.atan(Math.abs((-11.7 - randomZ)/randomX)); //angle that the ball is facing the hoop
       if(randomX < 0.0){
-          const LookAt = Mat4.look_at(vec3(randomX, 5, randomZ + 10), vec3(0, 1.5, -29), vec3(0, 1.0, 0));
+          const LookAt = Mat4.look_at(vec3(randomX, 1.5, randomZ + 5), vec3(0, 1.5, -29), vec3(0, 1.0, 0));
         //program_state.set_camera(LookAt);
         this.ballPOV = LookAt;
         //this.cameraPosition = model_transform.times(Mat4.translation(randomX+2.0*Math.cos(angle), -0.5, randomZ-2.0*Math.sin(angle)))
@@ -467,7 +465,7 @@ export class basketBallScene extends Scene {
         //console.log(Mat4.look_at(vec3(randomX - 4*Math.cos(angle), 1, randomZ + 4*Math.sin(angle)), vec3(0,2.6,-15.7), vec3(0, 1.0, 0)))
       }
       else{
-          const LookAt = Mat4.look_at(vec3(randomX, 5, randomZ + 10), vec3(0, 1.5, -29), vec3(0, 1.0, 0));
+          const LookAt = Mat4.look_at(vec3(randomX, 1.5, randomZ + 5), vec3(0, 1.5, -29), vec3(0, 1.0, 0));
         program_state.set_camera(LookAt);
         this.ballPOV = LookAt
         const ballLocation = Mat4.look_at(vec3(randomX,0,randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
@@ -483,7 +481,7 @@ export class basketBallScene extends Scene {
       //program_state.set_camera(Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 1, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1, 0)));
     }
     update_hori_angle(){
-      const maxVelocity = this.power * 30.0;
+      const maxVelocity = this.power * 15;
       let xDir = maxVelocity * Math.cos(this.angle);
       let zDir = maxVelocity * Math.sin(this.angle);
       if(zDir > 0){
