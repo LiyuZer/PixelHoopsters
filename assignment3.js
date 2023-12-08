@@ -103,7 +103,7 @@ export class basketBallScene extends Scene {
                 light_depth_texture: null
             }),
             court_texture: new Material(new Shadow_Textured_Phong_Shader(1), {
-                color: color(1, 1, 1, 1), ambient: 0.4, diffusivity: 0.5, specularity: 0.5, smoothness: 64,
+                color: color(1, 1, 1, 1), ambient: 0.4, diffusivity: 0.3, specularity: 0.5, smoothness: 64,
                 color_texture: new Texture("assets/court.png"),
                 light_depth_texture: null
             }),
@@ -156,6 +156,7 @@ export class basketBallScene extends Scene {
     
 
         }
+        this.ballPOV = Mat4.identity();
         this.camerapov = true;
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 0), vec3(0,5.6,-11.7), vec3(0, 10, 0));
         this.environments = 0;
@@ -404,6 +405,7 @@ export class basketBallScene extends Scene {
       if(randomX < 0.0){
         const LookAt = Mat4.look_at(vec3(randomX - 3*Math.cos(angle), 0.75, randomZ + 3*Math.sin(angle)), vec3(0,2.6,-11.7), vec3(0, 1.0, 0));
         program_state.set_camera(LookAt);
+        this.ballPOV = LookAt;
         //this.cameraPosition = model_transform.times(Mat4.translation(randomX+2.0*Math.cos(angle), -0.5, randomZ-2.0*Math.sin(angle)))
         //.times(Mat4.translation(-1,-1,0)).times(Mat4.scale(0.8,1,0.8)).times(Mat4.translation(1,1,0));
         const ballLocation = Mat4.look_at(vec3(randomX, 0, randomZ), vec3(0,2.6,-11.7), vec3(0, 1.0, 0))
@@ -513,7 +515,7 @@ export class basketBallScene extends Scene {
         this.new_line();
         this.key_triggered_button("Change scene", ["c"], () => {this.environments = (this.environments + 1)%3;});
         this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true});
-        this.key_triggered_button("change POV", ["p"],() => {this.camerapov != this.camerapov});
+        this.key_triggered_button("change POV", ["p"],() => {this.camerapov = !this.camerapov});
         this.key_triggered_button("New Round!", ["n"], ()=>{this.newRound = true});
       }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
@@ -535,7 +537,7 @@ export class basketBallScene extends Scene {
 
             this.init_ok = true;
         }
-        
+
         if (!context.scratchpad.controls) { //only once per instance of our game
           context.scratchpad.controls = 1;
           //this.children.push(context.scratchpad.controls = new defs.Movement_Controls()); //uncomment this if you want camera
@@ -590,12 +592,7 @@ export class basketBallScene extends Scene {
             this.angle = changeAngle; //this variable stores the angle gotten from clicking the screen
             this.update_angle = true;
           })
-          // Define the global camera and projection matrices, which are stored in program_state.
-          program_state.set_camera(Mat4.look_at(
-              vec3(0, 12, 12),
-              vec3(0, 2, 0),
-              vec3(0, 1, 0)
-          )); // Locate the camera here
+
         }
 
         
@@ -639,6 +636,12 @@ export class basketBallScene extends Scene {
           this.round_setup(model_transform,program_state);
         }
 
+        if(!this.camerapov){
+          program_state.set_camera(Mat4.identity().times(Mat4.translation(0,-5,-40)).times(Mat4.rotation(1.3,0,1,0)));
+        }
+        else{
+          program_state.set_camera(this.ballPOV);
+        }
 
 
         // Step 2: unbind, draw to the canvas
