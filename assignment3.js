@@ -513,17 +513,8 @@ export class basketBallScene extends Scene {
         //draw scoreboard
         this.shapes.cube.draw(context, program_state, scoreboard_transform, this.materials.grey);
 
-        // Text settings
-        const text_string = "1"; // The score you want to display
-        this.shapes.text.set_string(text_string, context.context);
-        let textshiftlength = text_string.length == 1 ? 0:-0.4;
-        // Calculate the transformation for the text
-        let text_transform = scoreboard_transform
-            .times(Mat4.translation(textshiftlength, 0, 1.01)) // Adjust these values to position the text
-            .times(Mat4.scale(0.5, .5, .5));   // Adjust the scale to fit the text on the cube face
-            
-        // Draw the text
-        this.shapes.text.draw(context, program_state, text_transform, this.materials.text_image);
+       
+        
         // // left side
         // let left_transform = model_transform.times(Mat4.translation(-17,8,0)).times(Mat4.scale(0.1,8,30));
         // this.shapes.cube.draw(context, program_state, left_transform, this.materials.wall_texture);
@@ -734,7 +725,6 @@ export class basketBallScene extends Scene {
         this.create_court(context,program_state,model_transform, true, true, true);
 
 
-
         //randomize our basketball position (currently commented out to test basketball shooting)
         
 
@@ -803,7 +793,22 @@ export class basketBallScene extends Scene {
         .times(Mat4.rotation(this.arrow_angle,0,1,0)).times(Mat4.translation(0,0,0.433015)).times(Mat4.scale(0.1,0.1,0.25))
         ,this.materials.arrow.override({color:this.arrowColor}));
         //this.create_stadium(context, program_state, model_transform);
-        }
+
+        //SCOREBOARD TEXT
+         // Text settings
+         let text_string = this.score.toString();
+         this.shapes.text.set_string(text_string, context.context);
+                 
+         let textshiftlength = text_string.length == 1 ? 0:-0.4;
+         // Calculate the transformation for the text
+         let text_transform = Mat4.identity().times(Mat4.translation(0,8.5,-30)).times(Mat4.scale(3,2,0.5))
+             .times(Mat4.translation(textshiftlength, 0, 1.01)) // Adjust these values to position the text
+             .times(Mat4.scale(0.5, .5, .5));   // Adjust the scale to fit the text on the cube face
+             
+         // Draw the text
+         this.shapes.text.draw(context, program_state, text_transform, this.materials.text_image);
+
+      }
         
 }
 
