@@ -473,6 +473,10 @@ export class basketBallScene extends Scene {
       }
       this.direction_vector = vec3(xDir,6,zDir);
     }
+    update_vert_angle(){
+      this.direction_vector = new Mat4([this.direction_vector[0]],[this.direction_vector[1]],[this.direction_vector[2]],[1])
+      this.direction_vector = Mat4.rotation(3,1,0,0).times(this.direction_vector);
+    }
     create_court(context,program_state,model_transform, shadow_pass, draw_light_source=false, draw_shadow=false){
         //create the court ground
         //current model_transform is uniform and cube we are using is a unit cube
@@ -596,8 +600,8 @@ export class basketBallScene extends Scene {
 
         this.key_triggered_button("up", ["w"], ()=>{this.direction_vector.times(Mat4.rotation(0.01,1,0,0))});
         this.key_triggered_button("down", ["s"], ()=>{this.direction_vector.times(Mat4.rotation(-0.01,1,0,0))});
-        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.1;this.update_hori_angle();this.arrow_angle+=0.1; this.change_arrow();});
-        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.0001;this.update_hori_angle();this.arrow_angle-=0.1; this.change_arrow();});
+        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.01;this.update_hori_angle();this.arrow_angle+=0.1; this.change_arrow();});
+        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.01;this.update_hori_angle();this.arrow_angle-=0.1; this.change_arrow();});
     }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
     
@@ -782,10 +786,7 @@ export class basketBallScene extends Scene {
           if(false){
             
             
-            //this.direction_vector = new Mat4([this.direction_vector[0]],[this.direction_vector[1]],[this.direction_vector[2]],[1])
-            console.log(this.direction_vector);
-            //this.direction_vector = Mat4.rotation(3,1,0,0).times(this.direction_vector);
-            console.log(this.direction_vector);
+            
           }
           //Optional stationary camera angle that can replace the ball POV
           program_state.set_camera(Mat4.identity().times(Mat4.translation(0,-5,-40)).times(Mat4.rotation(1.3,0,1,0)));
