@@ -517,7 +517,13 @@ export class basketBallScene extends Scene {
         this.key_triggered_button("Shoot Ball", ["k"], () => {this.ball_thrown = true});
         this.key_triggered_button("change POV", ["p"],() => {this.camerapov = !this.camerapov});
         this.key_triggered_button("New Round!", ["n"], ()=>{this.newRound = true});
-      }
+
+
+        this.key_triggered_button("up", ["w"], ()=>{this.direction_vector.times(Mat4.rotation(0.01,1,0,0))});
+        this.key_triggered_button("down", ["s"], ()=>{this.direction_vector.times(Mat4.rotation(-0.01,1,0,0))});
+        this.key_triggered_button("left", ["a"], ()=>{this.angle = this.angle + 0.0001; this.update_angle = true;});
+        this.key_triggered_button("right", ["d"], ()=>{this.angle = this.angle - 0.0001; this.update_angle = true;});
+    }
     //this function is what gets done after a shot is made (i.e placing the basketball in random location)
   
     
@@ -660,6 +666,7 @@ export class basketBallScene extends Scene {
         // The calculation for the thrown ball has changed slightly we now look at the directional vector rather than the angles
         if(!this.ball_thrown && this.update_angle) { //only calculates angle when ball is not shot
           this.update_angle = false;
+          console.log("ANGLE");
           console.log(this.angle)
           this.arrow_angle = this.angle * -1.0 + Math.PI;
           console.log(this.arrow_angle)
